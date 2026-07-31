@@ -17,10 +17,16 @@ une colonne par carburant.
 - Sélecteur de carte **« par entité »** de HA 2026.6+ : cliquer sur un sensor de
   l'intégration propose deux mises en page prêtes à l'emploi.
 
-Version de la carte : **1.0.0** · Home Assistant **2024.4+** (le sélecteur par entité
+Version de la carte : **1.0.1** · Home Assistant **2024.4+** (le sélecteur par entité
 demande 2026.6+, il est simplement ignoré avant).
 
 ## Installation
+
+**Prérequis** — l'intégration [Prix Carburant](https://github.com/Aohzan/hass-prixcarburant)
+d'Aohzan, qui fournit les données. Elle interroge le flux public
+[prix des carburants en France](https://data.economie.gouv.fr/explore/dataset/prix-des-carburants-en-france-flux-instantane-v2/)
+et crée un sensor par couple (station, carburant). La carte ne fait que lire ces entités :
+sans l'intégration, elle n'a rien à afficher.
 
 **HACS** — dépôt personnalisé, catégorie *Lovelace*.
 
@@ -83,7 +89,7 @@ columns:
   - updated
 
 # ---- Format des prix -------------------------------------------------------
-decimals: 3                   # nombre de décimales
+decimals: 3                   # nombre de décimales, entier de 0 à 10
 unit: €/L                     # suffixe des en-têtes de carburant ; "" pour aucun
 highlight: true               # coloration du prix mini / maxi
 color_min: "#4caa40"
@@ -125,7 +131,7 @@ logos:
 | `sort` | string | `distance` | Colonne de tri au chargement (voir *Tri*). |
 | `sort_desc` | bool | `false` | Inverse le sens du tri. |
 | `sortable` | bool | `true` | En-têtes cliquables pour trier à la volée. |
-| `decimals` | number | `3` | Décimales des prix. |
+| `decimals` | number | `3` | Décimales des prix, entier de 0 à 10. Hors bornes : carte d'erreur. |
 | `unit` | string | `€/L` | Suffixe ajouté aux en-têtes de carburant. `""` pour aucun. |
 | `highlight` | bool | `true` | Coloration mini / maxi. |
 | `color_min` | string | `#4caa40` | Couleur du prix le plus bas. |
@@ -253,7 +259,7 @@ Six sections repliables, dans l'ordre des décisions :
 | **Stations** | Interrupteur par station, ▲ / ▼ pour ordonner, interrupteur de tête « Toutes les stations ». Filtre au-delà de 8 stations ; les flèches sont neutralisées tant qu'un filtre est actif, l'ordre n'ayant pas de sens sur une liste partielle. |
 | **Tri** | `sort`, `sort_desc`, `sortable`. |
 | **Colonnes** | Interrupteur par colonne, ▲ / ▼ pour ordonner. |
-| **Affichage** | `title`, `show_title`, `unit`, `decimals` (0 à 3 dans l'éditeur, libre en YAML), `highlight`, `more_info`. |
+| **Affichage** | `title`, `show_title`, `unit`, `decimals` (0 à 3 dans l'éditeur, jusqu'à 10 en YAML), `highlight`, `more_info`. |
 | **Noms et villes** | Un champ nom et un champ ville par station affichée, plus les surcharges devenues orphelines. |
 | **Logos des enseignes** | Préfixe, puis un champ et un aperçu par enseigne détectée. |
 

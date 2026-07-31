@@ -7,6 +7,6 @@
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/Pulpyyyy/carte-burant/issues",
   "requirements": [],
-  "version": "1.0.0",
+  "version": "1.0.1",
   "homeassistant": "2024.4.0"
 }

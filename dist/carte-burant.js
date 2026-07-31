@@ -11,7 +11,7 @@
  * d'analyse et par les navigateurs anciens.
  */
 
-const CARD_VERSION = "1.0.0";
+const CARD_VERSION = "1.0.1";
 
 console.info(
   `%c 🙂 Prix Carburant Card %c v${CARD_VERSION} %c`,
@@ -129,9 +129,12 @@ const isPlainObject = function (value) {
 };
 
 /* Les clefs viennent du YAML : `45650001` (nombre) et `"45650001"` doivent
-   designer la meme station. */
+   designer la meme station. L'objet est cree sans prototype : une clef
+   `__proto__` y devient une entree ordinaire au lieu de changer le prototype,
+   et une recherche sur une clef comme `constructor` rend `undefined` au lieu de
+   remonter une fonction heritee d'`Object`. */
 const stringKeys = function (table) {
-  const out = {};
+  const out = Object.create(null);
   Object.keys(table).forEach(function (key) {
     out[String(key)] = table[key];
   });
@@ -142,6 +145,32 @@ const stringKeys = function (table) {
    chemin absolu reste utilisable meme quand un prefixe global est defini. */
 const isAbsoluteUrl = function (src) {
   return /^(?:[a-z][a-z0-9+.-]*:|\/\/|\/)/i.test(String(src));
+};
+
+/* Nombre d'entites de l'installation. Volontairement sans `Object.keys`, qui
+   allouerait un tableau de plusieurs milliers de chaines a chaque appel : on ne
+   veut qu'un compteur, pour reperer une entite apparue ou disparue. */
+const statesCount = function (hass) {
+  let count = 0;
+  if (!hass || !hass.states) return count;
+  for (const id in hass.states) count++;
+  return count;
+};
+
+/* Home Assistant remplace l'objet `hass` a chaque changement d'etat de la
+   maison, mais ne remplace l'objet d'etat que de l'entite concernee : une
+   comparaison d'identite sur les seuls sensors de l'integration suffit donc a
+   savoir s'il y a lieu de retravailler. Sans cette garde, allumer une lampe
+   ferait reparcourir toutes les entites pour, neuf fois sur dix, ne rien
+   trouver. Le compteur rattrape les apparitions et disparitions d'entites, que
+   la comparaison d'identite ne verrait pas. */
+const readingsUnchanged = function (previous, next, watched, count) {
+  if (!previous || !next || !previous.states || !next.states || !watched) return false;
+  if (statesCount(next) !== count) return false;
+  for (let i = 0; i < watched.length; i++) {
+    if (previous.states[watched[i]] !== next.states[watched[i]]) return false;
+  }
+  return true;
 };
 
 /* Nom "brut" d'une station. Le referentiel gouvernemental laisse beaucoup de
@@ -180,12 +209,28 @@ class PrixCarburantCard extends HTMLElement {
        configuration. Remis a zero a chaque setConfig. */
     this._sortKey = null;
     this._sortDesc = null;
+    /* Sensors de l'integration reperes au dernier passage, et nombre total
+       d'entites : de quoi ecarter sans travail les `hass` sans rapport. */
+    this._watched = null;
+    this._stateCount = 0;
+    /* Noeuds conserves entre deux rendus. */
+    this._styleNode = null;
+    this._cardNode = null;
   }
 
   /* ---------- decouverte des donnees de l'integration ---------- */
 
-  /* Un "releve" = un couple (station, carburant), soit une entite. */
+  /* Un "releve" = un couple (station, carburant), soit une entite.
+
+     Le resultat est memoise sur l'identite de l'objet `hass` : la carte et
+     l'editeur appellent cette methode jusqu'a sept fois par passe (colonnes,
+     stations, enseignes, resumes...), et rien ne justifie de reparcourir sept
+     fois les memes milliers d'entites. Le tableau rendu est partage, les
+     appelants ne doivent donc pas le modifier. */
   static readings(hass) {
+    if (hass && hass === PrixCarburantCard._readingsHass) {
+      return PrixCarburantCard._readingsValue;
+    }
     const out = [];
     if (!hass || !hass.states) return out;
     const states = hass.states;
@@ -204,6 +249,8 @@ class PrixCarburantCard extends HTMLElement {
         attrs: attrs
       });
     }
+    PrixCarburantCard._readingsHass = hass;
+    PrixCarburantCard._readingsValue = out;
     return out;
   }
 
@@ -281,19 +328,32 @@ class PrixCarburantCard extends HTMLElement {
     if (!isPlainObject(cfg.logos)) {
       throw new Error("`logos` doit etre une table `enseigne: fichier`");
     }
+    /* `toFixed` leve une RangeError hors de 0-100 : sans ce controle, un
+       `decimals: -1` ecrit a la main ferait echouer le rendu de chaque prix, et
+       une exception dans le rendu emporte la carte entiere. */
+    const decimals = Math.round(toNumber(cfg.decimals, DEFAULTS.decimals));
+    if (!isFinite(decimals) || decimals < 0 || decimals > 10) {
+      throw new Error("`decimals` doit etre un entier entre 0 et 10");
+    }
+    cfg.decimals = decimals;
     if (!cfg.columns || cfg.columns.length === 0) cfg.columns = DEFAULT_COLUMNS.slice();
     cfg.stations = cfg.stations.map(String);
     cfg.station_names = stringKeys(cfg.station_names);
     cfg.station_cities = stringKeys(cfg.station_cities);
+    cfg.logos = stringKeys(cfg.logos);
     this._config = cfg;
     this._sortKey = null;
     this._sortDesc = null;
     this._signature = "";
+    this._watched = null;
     this._update();
   }
 
   set hass(hass) {
+    const previous = this._hass;
     this._hass = hass;
+    /* Rien de l'integration n'a bouge : ni recalcul, ni rendu. */
+    if (readingsUnchanged(previous, hass, this._watched, this._stateCount)) return;
     this._update();
   }
 
@@ -401,12 +461,17 @@ class PrixCarburantCard extends HTMLElement {
     const dir = active.desc ? -1 : 1;
     const self = this;
 
-    /* "manual" : l'ordre est celui de la liste `stations` de la configuration. */
+    /* "manual" : l'ordre est celui de la liste `stations` de la configuration.
+       Le rang est indexe une fois pour toutes : chercher dans la liste depuis
+       le comparateur multiplierait le cout du tri par sa longueur. */
     if (active.key === "manual") {
-      const order = cfg.stations;
+      const order = new Map();
+      cfg.stations.forEach(function (sid, index) {
+        if (!order.has(sid)) order.set(sid, index);
+      });
       rows.sort(function (a, b) {
-        const ai = order.indexOf(a.sid);
-        const bi = order.indexOf(b.sid);
+        const ai = order.has(a.sid) ? order.get(a.sid) : -1;
+        const bi = order.has(b.sid) ? order.get(b.sid) : -1;
         if (ai === bi) return self._stationName(a).localeCompare(self._stationName(b), "fr");
         if (ai === -1) return 1;
         if (bi === -1) return -1;
@@ -467,15 +532,18 @@ class PrixCarburantCard extends HTMLElement {
     const levels = {};
     fuels.forEach(function (fuel) {
       const values = [];
+      /* Un `Set` plutot qu'un `filter` a `indexOf` imbrique : meme resultat,
+         sans le comportement quadratique quand la liste s'allonge. */
+      const distinct = new Set();
       rows.forEach(function (row) {
-        if (typeof row.fuels[fuel] === "number") values.push(row.fuels[fuel]);
-      });
-      const distinct = values.filter(function (v, i) {
-        return values.indexOf(v) === i;
+        const price = row.fuels[fuel];
+        if (typeof price !== "number") return;
+        values.push(price);
+        distinct.add(price);
       });
       levels[fuel] = {
-        min: distinct.length >= 1 ? Math.min.apply(null, values) : null,
-        max: distinct.length >= 2 ? Math.max.apply(null, values) : null
+        min: distinct.size >= 1 ? Math.min.apply(null, values) : null,
+        max: distinct.size >= 2 ? Math.max.apply(null, values) : null
       };
     });
     return levels;
@@ -485,6 +553,12 @@ class PrixCarburantCard extends HTMLElement {
 
   _update() {
     if (!this._config || !this._hass) return;
+    /* Sensors a surveiller au prochain `set hass`, releves ici pendant que la
+       liste est de toute facon parcourue. */
+    this._watched = PrixCarburantCard.readings(this._hass).map(function (r) {
+      return r.id;
+    });
+    this._stateCount = statesCount(this._hass);
     const rows = this._rows();
     const active = this._activeSort();
     const signature =
@@ -526,11 +600,19 @@ class PrixCarburantCard extends HTMLElement {
   _render(rows) {
     const cfg = this._config;
     const root = this.shadowRoot;
-    root.innerHTML = "";
 
-    const style = document.createElement("style");
-    style.textContent = STYLE;
-    root.appendChild(style);
+    /* La feuille de style ne depend pas des donnees : posee une seule fois,
+       elle evite au navigateur de reparser tout le CSS a chaque rendu. Seule la
+       carte est remplacee. */
+    if (!this._styleNode) {
+      this._styleNode = document.createElement("style");
+      this._styleNode.textContent = STYLE;
+      root.appendChild(this._styleNode);
+    }
+    if (this._cardNode) {
+      root.removeChild(this._cardNode);
+      this._cardNode = null;
+    }
 
     const card = document.createElement("ha-card");
     /* `show_title: false` garde le titre en configuration mais masque l'en-tete. */
@@ -542,6 +624,7 @@ class PrixCarburantCard extends HTMLElement {
     const wrap = document.createElement("div");
     wrap.className = "wrap";
     card.appendChild(wrap);
+    this._cardNode = card;
     root.appendChild(card);
 
     if (!rows.length) {
@@ -655,6 +738,9 @@ class PrixCarburantCard extends HTMLElement {
           img.src = src;
           img.alt = attrs.brand || "";
           img.loading = "lazy";
+          /* Un logo distant ne doit pas apprendre a l'hote tiers l'adresse du
+             tableau de bord qui l'affiche. */
+          img.referrerPolicy = "no-referrer";
           td.appendChild(img);
         } else {
           td.textContent = attrs.brand || "—";
@@ -789,6 +875,10 @@ class PrixCarburantCardEditor extends HTMLElement {
     this._forms = [];
     this._upgradeWaiting = false;
     this._stationFilter = "";
+    /* Meme garde que la carte : l'editeur ouvert ne doit pas se reconstruire
+       parce qu'une lampe a change d'etat. */
+    this._watched = null;
+    this._stateCount = 0;
     this._sigStations = null;
     this._sigColumns = null;
     this._sigNames = null;
@@ -807,11 +897,15 @@ class PrixCarburantCardEditor extends HTMLElement {
     if (!isPlainObject(this._config.logos)) this._config.logos = {};
     this._config.station_names = stringKeys(this._config.station_names);
     this._config.station_cities = stringKeys(this._config.station_cities);
+    this._config.logos = stringKeys(this._config.logos);
+    this._watched = null;
     this._render();
   }
 
   set hass(hass) {
+    const previous = this._hass;
     this._hass = hass;
+    if (readingsUnchanged(previous, hass, this._watched, this._stateCount)) return;
     this._render();
   }
 
@@ -1615,6 +1709,11 @@ class PrixCarburantCardEditor extends HTMLElement {
     if (!this._hass || !this._config) return;
     if (!this._built) this._build();
 
+    this._watched = PrixCarburantCard.readings(this._hass).map(function (r) {
+      return r.id;
+    });
+    this._stateCount = statesCount(this._hass);
+
     const self = this;
     this._forms.forEach(function (form) {
       form.hass = self._hass;
@@ -1678,10 +1777,17 @@ const entitySuggestion = function (hass, entityId) {
 };
 
 window.customCards = window.customCards || [];
-window.customCards.push({
-  type: "prix-carburant-card",
-  name: "Prix Carburant",
-  preview: true,
-  description: "Tableau des prix des carburants : choix des stations et des colonnes.",
-  getEntitySuggestion: entitySuggestion
+/* Le fichier peut etre declare deux fois en ressources (migration manuelle puis
+   HACS) : sans ce garde-fou, la carte apparaitrait en double dans le selecteur. */
+const alreadyRegistered = window.customCards.some(function (entry) {
+  return entry && entry.type === "prix-carburant-card";
 });
+if (!alreadyRegistered) {
+  window.customCards.push({
+    type: "prix-carburant-card",
+    name: "Prix Carburant",
+    preview: true,
+    description: "Tableau des prix des carburants : choix des stations et des colonnes.",
+    getEntitySuggestion: entitySuggestion
+  });
+}
