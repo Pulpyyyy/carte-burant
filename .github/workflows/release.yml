@@ -1,0 +1,104 @@
+name: Release
+
+on:
+  workflow_call:
+    inputs:
+      tag:
+        required: true
+        type: string
+      version:
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build GitHub Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code at tag
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag }}
+          fetch-depth: 0
+
+      - name: Verify dist assets exist
+        run: |
+          for f in dist/carte-burant.js; do
+            if [ ! -f "$f" ]; then
+              echo "ERROR: required asset '$f' is missing from this tag." >&2
+              exit 1
+            fi
+          done
+          echo "Dist asset confirmed present."
+
+      - name: Verify version consistency
+        run: |
+          VERSION="${{ inputs.version }}"
+          JS_VERSION=$(grep -oP 'CARD_VERSION\s*=\s*"\K[0-9]+\.[0-9]+\.[0-9]+' \
+            dist/carte-burant.js | head -n 1)
+          if [ -z "$JS_VERSION" ]; then
+            echo "WARNING: Could not extract CARD_VERSION from JS. Proceeding anyway."
+          elif [ "$JS_VERSION" != "$VERSION" ]; then
+            echo "ERROR: Tag version '$VERSION' does not match JS version '$JS_VERSION'." >&2
+            exit 1
+          else
+            echo "Version consistency check passed: $JS_VERSION"
+          fi
+
+      - name: Build release notes
+        id: notes
+        run: |
+          TAG="${{ inputs.tag }}"
+          VERSION="${{ inputs.version }}"
+
+          PREV_TAG=$(git tag --sort=-version:refname | grep -v "^${TAG}$" | head -n 1)
+          if [ -n "$PREV_TAG" ]; then
+            COMMITS=$(git log "${PREV_TAG}..${TAG}" --pretty=format:"- %s (%h)" --no-merges)
+            RANGE_TEXT="Changes since \`${PREV_TAG}\`"
+          else
+            COMMITS=$(git log "${TAG}" --pretty=format:"- %s (%h)" --no-merges | head -20)
+            RANGE_TEXT="Initial release commits"
+          fi
+
+          cat > /tmp/release_notes.md << NOTES
+          ## Prix Carburant Card ${VERSION}
+
+          ### ${RANGE_TEXT}
+
+          ${COMMITS}
+
+          ---
+          ### Installation
+
+          #### HACS (recommended)
+          This release is automatically available via HACS.
+
+          #### Manual
+          1. Download \`carte-burant.js\` from the assets below.
+          2. Place the file in your \`config/www/\` directory.
+          3. Add the resource in Home Assistant:
+             - **URL:** \`/local/carte-burant.js\`
+             - **Type:** JavaScript module
+          4. Reload your browser.
+
+          ---
+          **Full Changelog:** https://github.com/${{ github.repository }}/commits/${TAG}
+          NOTES
+
+          echo "notes_file=/tmp/release_notes.md" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.tag }}
+          name: "${{ inputs.version }}"
+          body_path: ${{ steps.notes.outputs.notes_file }}
+          draft: false
+          prerelease: ${{ contains(inputs.tag, '-') }}
+          files: |
+            dist/carte-burant.js
+          fail_on_unmatched_files: true

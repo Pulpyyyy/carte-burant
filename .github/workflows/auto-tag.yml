@@ -1,0 +1,59 @@
+name: Tag
+
+on:
+  workflow_call:
+    outputs:
+      tag:
+        description: "The git tag (e.g. v1.2.3)"
+        value: ${{ jobs.tag.outputs.tag }}
+      version:
+        description: "The version without v prefix (e.g. 1.2.3)"
+        value: ${{ jobs.tag.outputs.version }}
+      created:
+        description: "true if a new tag was created, false if it already existed"
+        value: ${{ jobs.tag.outputs.created }}
+
+permissions:
+  contents: write
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.get_version.outputs.tag }}
+      version: ${{ steps.get_version.outputs.version }}
+      created: ${{ steps.push_tag.outputs.created }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract Version from JS
+        id: get_version
+        run: |
+          VERSION=$(grep -oP 'CARD_VERSION\s*=\s*"\K[0-9]+\.[0-9]+\.[0-9]+' dist/carte-burant.js | head -n 1)
+          if [ -z "$VERSION" ]; then
+            echo "ERROR: Could not extract CARD_VERSION from dist/carte-burant.js" >&2
+            exit 1
+          fi
+          TAG="v$VERSION"
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Found version: $TAG"
+
+      - name: Create and push tag
+        id: push_tag
+        run: |
+          TAG="${{ steps.get_version.outputs.tag }}"
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "Tag $TAG already exists. Skipping."
+            echo "created=false" >> "$GITHUB_OUTPUT"
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git tag "$TAG"
+            git push origin "$TAG"
+            echo "created=true" >> "$GITHUB_OUTPUT"
+          fi

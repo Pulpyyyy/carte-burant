@@ -1,0 +1,12 @@
+{
+  "domain": "prix_carburant_card",
+  "name": "Prix Carburant Card",
+  "codeowners": ["@Pulpyyyy"],
+  "config_flow": false,
+  "documentation": "https://github.com/Pulpyyyy/carte-burant",
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/Pulpyyyy/carte-burant/issues",
+  "requirements": [],
+  "version": "1.0.0",
+  "homeassistant": "2024.4.0"
+}

@@ -1,0 +1,166 @@
+<!--
+  Banc de rendu des captures du README (.img/card.png et .img/dark.png).
+
+  La page charge la carte reelle depuis ../dist/carte-burant.js et lui donne un
+  objet `hass` reduit : un sensor par couple (station, carburant), avec les memes
+  attributs que l'integration Prix Carburant. Ce qui est photographie est donc le
+  vrai rendu de la carte, pas une maquette HTML.
+
+  Ouvrir directement dans un navigateur pour verifier, ou lancer
+  `tools/screenshot.ps1` pour regenerer les deux PNG.
+  `?dark` bascule sur le theme sombre.
+
+  Les prix, adresses et horodatages viennent du flux public
+  https://data.economie.gouv.fr/explore/dataset/prix-des-carburants-en-france-flux-instantane-v2/
+  releve le 31/07/2026 ; les noms de stations et les enseignes du referentiel de
+  l'integration ; les distances sont calculees depuis le centre de Paris.
+-->
+<meta charset="utf-8">
+<title>Prix Carburant Card — rendu</title>
+<style>
+  /* Variables de theme de Home Assistant, valeurs par defaut du frontend. */
+  :root {
+    --primary-text-color: #212121;
+    --secondary-text-color: #727272;
+    --divider-color: rgba(0,0,0,.12);
+    --primary-color: #03a9f4;
+    --card-background-color: #fff;
+    --ha-card-background: #fff;
+  }
+  html.dark {
+    --primary-text-color: #e1e1e1;
+    --secondary-text-color: #9b9b9b;
+    --divider-color: rgba(225,225,225,.12);
+    --primary-color: #38a4dd;
+    --card-background-color: #1c1c1c;
+    --ha-card-background: #1c1c1c;
+  }
+  html { background: #f4f5f7; }
+  html.dark { background: #111111; }
+  body {
+    margin: 0; padding: 20px;
+    font-family: Roboto, "Segoe UI", system-ui, sans-serif;
+    color: var(--primary-text-color);
+  }
+  /* Largeur de la capture : les 15 colonnes tiennent sans barre de defilement. */
+  #host { width: 1320px; }
+</style>
+<div id="host"></div>
+
+<script>
+  /* Doublure minimale de `ha-card` : le frontend n'est pas la, mais la carte
+     n'attend de lui qu'un `header` et un conteneur. */
+  class HaCard extends HTMLElement {
+    constructor() {
+      super();
+      this.attachShadow({ mode: "open" });
+      this.shadowRoot.innerHTML =
+        '<style>' +
+        ':host { display: block; background: var(--ha-card-background, var(--card-background-color));' +
+        '  border-radius: 12px; box-shadow: 0 2px 2px rgba(0,0,0,.12); color: var(--primary-text-color); }' +
+        '.header { font-size: 24px; font-weight: 400; letter-spacing: -.012em; line-height: 32px;' +
+        '  padding: 12px 16px 8px; }' +
+        '.header:empty { display: none; }' +
+        '</style><div class="header"></div><slot></slot>';
+    }
+    set header(value) {
+      this.shadowRoot.querySelector(".header").textContent = value || "";
+    }
+  }
+  customElements.define("ha-card", HaCard);
+</script>
+
+<script src="../dist/carte-burant.js"></script>
+
+<script>
+  const STATIONS = [
+    { sid: "75016001", name: "Carrefour Auteuil", brand: "Carrefour",
+      address: "1 Avenue du Général Sarrail", city: "Paris", cp: "75016", distance: 7.1,
+      prices: { Gazole: [2.279, "2026-07-27T07:00:21+00:00"],
+                SP98:   [2.178, "2026-07-27T07:00:22+00:00"],
+                E10:    [2.095, "2026-07-23T06:59:34+00:00"] } },
+    { sid: "59800002", name: "E.LECLERC Lille (Fives)", brand: "Leclerc",
+      address: "94 Rue de Lannoy", city: "Lille", cp: "59000", distance: 204.8,
+      prices: { Gazole: [2.149, "2026-07-27T09:46:07+00:00"],
+                SP95:   [2.026, "2026-07-27T09:46:07+00:00"],
+                SP98:   [2.089, "2026-07-27T09:46:08+00:00"],
+                E10:    [1.986, "2026-07-27T09:46:08+00:00"] } },
+    { sid: "69002006", name: "BP LYON PONT PASTEUR", brand: "BP",
+      address: "84 QUAI PERRACHE", city: "Lyon", cp: "69002", distance: 393.7,
+      prices: { Gazole: [2.279, "2026-07-31T11:04:25+00:00"],
+                SP98:   [2.089, "2026-07-31T11:04:26+00:00"],
+                E10:    [1.999, "2026-07-31T11:04:26+00:00"] } },
+    { sid: "33080001", name: "Auchan Bordeaux le lac", brand: "Auchan",
+      address: "avenue des 40 journaux", city: "Bordeaux", cp: "33300", distance: 494.1,
+      prices: { Gazole: [2.153, "2026-07-31T12:30:00+00:00"],
+                SP98:   [2.059, "2026-07-31T12:30:00+00:00"],
+                E10:    [1.984, "2026-07-31T12:30:00+00:00"],
+                E85:    [0.802, "2026-07-31T12:30:00+00:00"],
+                GPLc:   [1.059, "2026-07-02T11:22:35+00:00"] } },
+    { sid: "31000003", name: "Intermarché TOULOUSE", brand: "Intermarché",
+      address: "138 Avenue de Fronton", city: "Toulouse", cp: "31200", distance: 584.8,
+      prices: { Gazole: [2.278, "2026-07-31T07:32:47+00:00"],
+                SP98:   [2.138, "2026-07-27T09:09:29+00:00"],
+                E10:    [2.008, "2026-07-27T09:09:29+00:00"],
+                E85:    [0.829, "2026-07-30T09:03:17+00:00"] } },
+    { sid: "13013016", name: "RELAIS DES OLIVES", brand: "Total Access",
+      address: "AVENUE FREDERIC MISTRAL", city: "Marseille", cp: "13013", distance: 659.9,
+      prices: { Gazole: [2.215, "2026-07-31T00:01:00+00:00"],
+                SP98:   [1.99,  "2026-07-31T00:01:00+00:00"],
+                E10:    [1.986, "2026-07-31T00:01:00+00:00"],
+                E85:    [0.874, "2026-07-31T00:01:00+00:00"],
+                GPLc:   [0.981, "2026-07-31T00:01:00+00:00"] } }
+  ];
+
+  /* Le `hass` minimal que lit la carte : uniquement `states`. */
+  const states = {};
+  STATIONS.forEach(function (station) {
+    Object.keys(station.prices).forEach(function (fuel) {
+      const entry = station.prices[fuel];
+      states["sensor.prix_carburant_" + station.sid + "_" + fuel.toLowerCase()] = {
+        state: String(entry[0]),
+        attributes: {
+          station_id: station.sid,
+          fuel_type: fuel,
+          name: station.name,
+          brand: station.brand,
+          address: station.address,
+          city: station.city,
+          postal_code: station.cp,
+          distance: station.distance,
+          updated_date: entry[1]
+        }
+      };
+    });
+  });
+
+  const card = document.createElement("prix-carburant-card");
+  card.setConfig({
+    type: "custom:prix-carburant-card",
+    title: "Prix des carburants",
+    /* La capture doit montrer chaque colonne reconnue : les meta, puis tous les
+       carburants du referentiel, puis la date. */
+    columns: [
+      "logo", "name", "brand", "address", "postal_code", "city", "station_id", "distance",
+      "Gazole", "SP95", "SP98", "E10", "E85", "GPLc",
+      "updated"
+    ],
+    sort: "Gazole",
+    /* Logos servis par Wikimedia : la capture n'embarque aucun fichier de marque
+       dans le depot. */
+    logos: {
+      carrefour: "https://upload.wikimedia.org/wikipedia/fr/thumb/3/3b/Logo_Carrefour.svg/250px-Logo_Carrefour.svg.png",
+      leclerc: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/E._Leclerc_logo.png/250px-E._Leclerc_logo.png",
+      bp: "https://upload.wikimedia.org/wikipedia/fr/thumb/3/32/B_P.svg/250px-B_P.svg.png",
+      auchan: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Auchan_Retail_logo.svg/250px-Auchan_Retail_logo.svg.png",
+      intermarche: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/99/Intermarch%C3%A9_logo_2009_supermarkets.svg/250px-Intermarch%C3%A9_logo_2009_supermarkets.svg.png",
+      totalaccess: "https://upload.wikimedia.org/wikipedia/fr/thumb/f/f7/Logo_TotalEnergies.svg/250px-Logo_TotalEnergies.svg.png"
+    }
+  });
+  card.hass = { states: states };
+  document.getElementById("host").appendChild(card);
+
+  if (location.search.indexOf("dark") !== -1) {
+    document.documentElement.classList.add("dark");
+  }
+</script>
