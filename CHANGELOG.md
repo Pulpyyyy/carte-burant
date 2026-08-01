@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented in this file.
 
+## [1.0.3] - 2026-08-01
+
+### Fixed
+- **L'éditeur graphique ne perdait plus rien dès qu'un nom, une ville ou un logo était surchargé** : cocher une colonne ou une station la voyait revenir en arrière aussitôt. Les tables de surcharges étaient créées sans prototype — une protection contre les clefs `__proto__` — mais la configuration ne nous appartient pas : Home Assistant la fige en profondeur (`deep-freeze`) à la réception, et ce figeage appelle `o.hasOwnProperty(...)` sur chaque valeur. Sur un objet sans prototype il lève `hasOwnProperty is not a function`, et le dialogue d'édition abandonne **avant** d'appliquer la configuration, qu'il remplace par la précédente. Les tables gardent désormais `Object.prototype` ; les entrées sont posées par `defineProperty` et lues par `tableValue`, ce qui écarte aussi bien `__proto__` en écriture que `constructor` ou `toString` en lecture. La configuration reste inchangée : rien à modifier en YAML.
+- **L'éditeur n'est plus vide quand la langue se résout avant sa construction** : `_rebuild()` ne faisait rien tant que rien n'avait été construit, alors que c'est justement le rendu initial qu'il restait à faire.
+
 ## [1.0.2] - 2026-08-01
 
 ### Added

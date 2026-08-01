@@ -18,7 +18,7 @@ une colonne par carburant.
   l'intégration propose deux mises en page prêtes à l'emploi.
 - **Français et anglais**, carte et éditeur, suivant la langue de Home Assistant.
 
-Version de la carte : **1.0.2** · Home Assistant **2024.4+** (le sélecteur par entité
+Version de la carte : **1.0.3** · Home Assistant **2024.4+** (le sélecteur par entité
 demande 2026.6+, il est simplement ignoré avant).
 
 ## Installation

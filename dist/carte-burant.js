@@ -11,7 +11,7 @@
  * d'analyse et par les navigateurs anciens.
  */
 
-const CARD_VERSION = "1.0.2";
+const CARD_VERSION = "1.0.3";
 
 console.info(
   `%c 🙂 Prix Carburant Card %c v${CARD_VERSION} %c`,
@@ -424,16 +424,39 @@ const isPlainObject = function (value) {
 };
 
 /* Les clefs viennent du YAML : `45650001` (nombre) et `"45650001"` doivent
-   designer la meme station. L'objet est cree sans prototype : une clef
-   `__proto__` y devient une entree ordinaire au lieu de changer le prototype,
-   et une recherche sur une clef comme `constructor` rend `undefined` au lieu de
-   remonter une fonction heritee d'`Object`. */
+   designer la meme station.
+
+   L'entree est posee par `defineProperty` et non par affectation : une clef
+   `__proto__` devient ainsi une entree ordinaire au lieu de changer le
+   prototype de la table.
+
+   La table garde en revanche `Object.prototype`. Un objet sans prototype
+   serait plus sur encore, mais la configuration ne nous appartient pas : Home
+   Assistant la fige en profondeur avec `deep-freeze`, qui appelle
+   `o.hasOwnProperty(...)` sur chaque valeur et leve `hasOwnProperty is not a
+   function` sur un objet sans prototype. Le dialogue d'edition abandonne alors
+   avant d'appliquer la config, et toute modification faite a la souris revient
+   en arriere. Les lectures passent donc par `tableValue`, qui rend le meme
+   service que l'absence de prototype. */
 const stringKeys = function (table) {
-  const out = Object.create(null);
+  const out = {};
   Object.keys(table).forEach(function (key) {
-    out[String(key)] = table[key];
+    Object.defineProperty(out, String(key), {
+      value: table[key],
+      writable: true,
+      enumerable: true,
+      configurable: true
+    });
   });
   return out;
+};
+
+/* Lecture d'une table de surcharges. Sans ce filtre, une clef comme
+   `constructor` ou `toString` remonterait une fonction heritee d'`Object` en
+   guise de nom de station ou d'URL de logo. */
+const tableValue = function (table, key) {
+  if (!table) return undefined;
+  return Object.prototype.hasOwnProperty.call(table, key) ? table[key] : undefined;
 };
 
 /* `logo_path` ne prefixe que les valeurs relatives : une URL complete ou un
@@ -705,14 +728,14 @@ class PrixCarburantCard extends HTMLElement {
      Quand le referentiel ne connait pas le nom, l'integration renvoie la chaine
      "Undefined" : on la traite comme absente et on retombe sur enseigne + id. */
   _stationName(row) {
-    const custom = this._config.station_names[row.sid];
+    const custom = tableValue(this._config.station_names, row.sid);
     if (custom !== undefined && custom !== null && String(custom) !== "") return String(custom);
     return stationLabel(row.attrs, row.sid);
   }
 
   /* Idem pour la ville : `station_cities` prime sur l'attribut `city`. */
   _stationCity(row) {
-    const custom = this._config.station_cities[row.sid];
+    const custom = tableValue(this._config.station_cities, row.sid);
     if (custom !== undefined && custom !== null && String(custom) !== "") return String(custom);
     return row.attrs.city ? String(row.attrs.city) : "";
   }
@@ -720,8 +743,8 @@ class PrixCarburantCard extends HTMLElement {
   /* Logo : surcharge par station_id, puis par enseigne, puis entity_picture. */
   _logoSrc(row) {
     const cfg = this._config;
-    let src = cfg.logos[row.sid];
-    if (!src) src = cfg.logos[brandKey(row.attrs.brand)];
+    let src = tableValue(cfg.logos, row.sid);
+    if (!src) src = tableValue(cfg.logos, brandKey(row.attrs.brand));
     if (src) {
       src = String(src);
       if (cfg.logo_path && !isAbsoluteUrl(src)) src = cfg.logo_path + src;
@@ -1302,8 +1325,16 @@ class PrixCarburantCardEditor extends HTMLElement {
      la clef, pour ne pas laisser de `"45650001": ""` dans le YAML. */
   _emitTable(table, key, value) {
     const next = Object.assign({}, this._config[table]);
-    if (value) next[key] = value;
-    else delete next[key];
+    /* Meme precaution que `stringKeys` : une station nommee `__proto__` ne doit
+       pas changer le prototype de la table au lieu d'y creer une entree. */
+    if (value) {
+      Object.defineProperty(next, String(key), {
+        value: value,
+        writable: true,
+        enumerable: true,
+        configurable: true
+      });
+    } else delete next[key];
     const patch = {};
     patch[table] = next;
     this._emit(patch);
@@ -1597,7 +1628,14 @@ class PrixCarburantCardEditor extends HTMLElement {
   }
 
   _rebuild() {
-    if (!this._built) return;
+    /* Rien n'est encore construit : il n'y a pas d'ancien rendu a jeter, mais le
+       rendu initial reste a faire. Sans cela, une langue resolue au premier
+       `set hass` — le cas courant, `currentLang` valant `en` avant lui — laisse
+       l'editeur vide quand `hass` arrive avant `setConfig`. */
+    if (!this._built) {
+      this._render();
+      return;
+    }
     this.shadowRoot.innerHTML = "";
     this._built = false;
     this._forms = [];
@@ -1826,7 +1864,11 @@ class PrixCarburantCardEditor extends HTMLElement {
     const signature = shown
       .map(function (s) {
         return (
-          s.sid + "=" + (cfg.station_names[s.sid] || "") + "/" + (cfg.station_cities[s.sid] || "")
+          s.sid +
+          "=" +
+          (tableValue(cfg.station_names, s.sid) || "") +
+          "/" +
+          (tableValue(cfg.station_cities, s.sid) || "")
         );
       })
       .join(";");
@@ -1859,12 +1901,12 @@ class PrixCarburantCardEditor extends HTMLElement {
       row.className = "row";
       row.appendChild(self._label(station.name, station.sid));
       row.appendChild(
-        self._textField(cfg.station_names[station.sid], station.name, function (value) {
+        self._textField(tableValue(cfg.station_names, station.sid), station.name, function (value) {
           self._emitTable("station_names", station.sid, value);
         })
       );
       row.appendChild(
-        self._textField(cfg.station_cities[station.sid], station.city || t("ed_city"), function (value) {
+        self._textField(tableValue(cfg.station_cities, station.sid), station.city || t("ed_city"), function (value) {
           self._emitTable("station_cities", station.sid, value);
         })
       );
@@ -1889,7 +1931,7 @@ class PrixCarburantCardEditor extends HTMLElement {
     const signature =
       brands
         .map(function (b) {
-          return b.key + "=" + (cfg.logos[b.key] || "");
+          return b.key + "=" + (tableValue(cfg.logos, b.key) || "");
         })
         .join(";") +
       "|" +
@@ -1909,13 +1951,13 @@ class PrixCarburantCardEditor extends HTMLElement {
     const self = this;
     brands.forEach(function (brand) {
       const row = document.createElement("div");
-      row.className = cfg.logos[brand.key] ? "row" : "row off";
+      row.className = tableValue(cfg.logos, brand.key) ? "row" : "row off";
 
       /* Cadre toujours present : la colonne d'apercus reste alignee, et une URL
          cassee se voit tout de suite (fond rouge) au lieu d'un blanc ambigu. */
       const box = document.createElement("div");
       box.className = "logo-box";
-      let src = cfg.logos[brand.key] || "";
+      let src = tableValue(cfg.logos, brand.key) || "";
       if (src && cfg.logo_path && !isAbsoluteUrl(src)) src = cfg.logo_path + src;
       if (src) {
         const preview = document.createElement("img");
