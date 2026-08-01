@@ -25,26 +25,21 @@ jobs:
           ref: ${{ inputs.tag }}
           fetch-depth: 0
 
-      - name: Verify dist assets exist
+      # Un plugin HACS est un fichier unique : l'asset de release porte le nom
+      # attendu par HACS (`carte-burant.js`, deduit du nom du depot), il est pose
+      # tel quel dans `/hacsfiles/carte-burant/`. Rien d'autre ne doit etre
+      # necessaire au chargement de la carte.
+      - name: Verify dist asset exists
         run: |
-          for f in dist/carte-burant.js dist/lang/fr.js dist/lang/en.js; do
-            if [ ! -f "$f" ]; then
-              echo "ERROR: required asset '$f' is missing from this tag." >&2
-              exit 1
-            fi
-          done
-          echo "All dist assets confirmed present."
-
-      # La carte importe ses fichiers de langue en chemin relatif : HACS doit donc
-      # recreer l'arborescence `lang/` a l'installation, ce que seul un zip
-      # garantit (des assets de release sont des fichiers plats). D'ou
-      # `zip_release` dans hacs.json et cette archive.
-      - name: Build the HACS archive
-        run: |
-          cd dist
-          zip -r ../carte-burant.zip carte-burant.js lang
-          cd ..
-          unzip -l carte-burant.zip
+          if [ ! -f dist/carte-burant.js ]; then
+            echo "ERROR: dist/carte-burant.js is missing from this tag." >&2
+            exit 1
+          fi
+          if grep -nE '^\s*import\s' dist/carte-burant.js; then
+            echo "ERROR: the card must stay self-contained, no import allowed." >&2
+            exit 1
+          fi
+          echo "Asset confirmed present and self-contained."
 
       - name: Verify version consistency
         run: |
@@ -89,10 +84,8 @@ jobs:
           This release is automatically available via HACS.
 
           #### Manual
-          1. Download \`carte-burant.zip\` from the assets below.
-          2. Extract it into \`config/www/community/carte-burant/\`. The folder must
-             end up holding \`carte-burant.js\` **and** the \`lang/\` directory: the
-             card imports its translations relatively and will not load without them.
+          1. Download \`carte-burant.js\` from the assets below.
+          2. Drop it into \`config/www/community/carte-burant/\`.
           3. Add the resource in Home Assistant:
              - **URL:** \`/local/community/carte-burant/carte-burant.js\`
              - **Type:** JavaScript module
@@ -112,9 +105,5 @@ jobs:
           body_path: ${{ steps.notes.outputs.notes_file }}
           draft: false
           prerelease: ${{ contains(inputs.tag, '-') }}
-          files: |
-            carte-burant.zip
-            dist/carte-burant.js
-            dist/lang/fr.js
-            dist/lang/en.js
+          files: dist/carte-burant.js
           fail_on_unmatched_files: true

@@ -1,7 +1,4 @@
 {
-  "name": "Prix Carburant Card",
-  "filename": "carte-burant.zip",
-  "zip_release": true,
-  "render_readme": true,
+  "name": "Carte-burant",
   "homeassistant": "2024.4.0"
 }

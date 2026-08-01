@@ -29,30 +29,21 @@ d'Aohzan, qui fournit les données. Elle interroge le flux public
 et crée un sensor par couple (station, carburant). La carte ne fait que lire ces entités :
 sans l'intégration, elle n'a rien à afficher.
 
-**HACS** — dépôt personnalisé, catégorie *Lovelace*. HACS installe l'archive de la
-release, qui contient la carte **et** son dossier `lang/`.
+**HACS** — dépôt personnalisé, catégorie *Lovelace*. HACS pose `carte-burant.js` dans
+`config/www/community/carte-burant/` et déclare la ressource tout seul.
 
-**Manuellement** — télécharger `carte-burant.zip` depuis la
-[dernière release](https://github.com/Pulpyyyy/carte-burant/releases/latest) et l'extraire
-dans `config/www/community/carte-burant/`. Le dossier doit contenir :
-
-```
-config/www/community/carte-burant/
-├── carte-burant.js
-└── lang/
-    ├── fr.js
-    └── en.js
-```
-
-Puis *Paramètres → Tableaux de bord → Ressources* :
+**Manuellement** — télécharger `carte-burant.js` depuis la
+[dernière release](https://github.com/Pulpyyyy/carte-burant/releases/latest), le déposer dans
+`config/www/community/carte-burant/`, puis *Paramètres → Tableaux de bord → Ressources* :
 
 ```yaml
-url: /hacsfiles/carte-burant/carte-burant.js
+url: /local/community/carte-burant/carte-burant.js
 type: module
 ```
 
-Le `type: module` n'est pas décoratif : la carte importe ses fichiers de langue par chemin
-relatif. Sans le dossier `lang/` à côté d'elle, elle ne se charge pas du tout.
+La carte tient dans ce seul fichier : ni dépendance, ni fichier annexe à côté d'elle.
+Après une installation par HACS, la ressource déjà déclarée pointe sur
+`/hacsfiles/carte-burant/carte-burant.js` — c'est le même fichier, il n'y a rien à ajouter.
 
 ## Le minimum qui marche
 
@@ -335,11 +326,11 @@ du frontend (`hass.locale.language`) : français dès qu'elle commence par `fr` 
 `fr-CA`, `fr-BE` —, anglais dans tous les autres cas. Il n'y a aucune option à régler, et
 changer de langue dans Home Assistant met la carte à jour sans recharger la page.
 
-Un fichier par langue dans [`dist/lang/`](dist/lang/), importé statiquement par la carte.
-**Ajouter une langue** tient en trois gestes : copier `lang/fr.js` en `lang/xx.js` et
-traduire les valeurs — les clefs sont communes et rangées dans le même ordre —, l'importer
-en tête de `carte-burant.js`, et l'ajouter à `STRINGS` puis à `setLanguageFrom`. Les
-contributions sont les bienvenues.
+Une table par langue en tête de [`dist/carte-burant.js`](dist/carte-burant.js) — la carte
+est un fichier unique, comme tout plugin HACS. **Ajouter une langue** tient en trois
+gestes : copier la table `FR` sous un autre nom et traduire les valeurs — les clefs sont
+communes et rangées dans le même ordre —, l'ajouter à `STRINGS`, puis étendre
+`setLanguageFrom`. Les contributions sont les bienvenues.
 
 Ce qui **n'est pas** traduit, volontairement :
 
