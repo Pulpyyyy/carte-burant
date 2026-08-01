@@ -17,7 +17,7 @@ une colonne par carburant.
 - Sélecteur de carte **« par entité »** de HA 2026.6+ : cliquer sur un sensor de
   l'intégration propose deux mises en page prêtes à l'emploi.
 
-Version de la carte : **1.0.1** · Home Assistant **2024.4+** (le sélecteur par entité
+Version de la carte : **1.0.2** · Home Assistant **2024.4+** (le sélecteur par entité
 demande 2026.6+, il est simplement ignoré avant).
 
 ## Installation
@@ -202,6 +202,25 @@ Avec `sortable: true`, un clic sur un en-tête trie sur cette colonne, un second
 inverse le sens (▲ / ▼ apparaît sur la colonne active). Ce tri est **temporaire** : il
 n'est pas écrit dans la configuration et repart de `sort` au rechargement de la page.
 La colonne `logo` n'est jamais cliquable.
+
+### Retrouver son ordre de stations
+
+Dès que `stations` contient une liste, l'ordre que tu y as figé — au clavier ou avec les
+▲ / ▼ de l'éditeur — devient le **troisième état** de la colonne `name` :
+
+| Clic sur *Station* | Marqueur | Résultat |
+|---|---|---|
+| 1 | ▲ | Nom croissant |
+| 2 | ▼ | Nom décroissant |
+| 3 | ≡ | **Ton ordre**, `sort_desc` compris |
+
+Sans ce cycle, un clic malheureux enfermait la carte dans un tri alphabétique jusqu'au
+rechargement de la page : l'ordre manuel n'a pas d'en-tête à lui, rien ne permettait d'y
+revenir. Le marqueur ≡ signale que le tableau suit ta liste. Trier sur une autre colonne
+puis recliquer sur *Station* repart normalement du nom croissant.
+
+Sans liste `stations` (donc « toutes les stations »), il n'y a pas d'ordre manuel à
+rétablir et la colonne garde ses deux états.
 
 ## Coloration des prix
 

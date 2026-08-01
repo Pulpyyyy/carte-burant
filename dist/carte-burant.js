@@ -11,7 +11,7 @@
  * d'analyse et par les navigateurs anciens.
  */
 
-const CARD_VERSION = "1.0.1";
+const CARD_VERSION = "1.0.2";
 
 console.info(
   `%c 🙂 Prix Carburant Card %c v${CARD_VERSION} %c`,
@@ -583,16 +583,46 @@ class PrixCarburantCard extends HTMLElement {
     this._render(rows);
   }
 
+  /* Une liste `stations` non vide fige un ordre voulu par l'utilisateur, que
+     l'editeur laisse ranger avec les fleches. */
+  _hasManualOrder() {
+    return this._config.stations.length > 0;
+  }
+
   /* Clic sur un en-tete : meme colonne = on inverse, autre colonne = tri
-     ascendant sur celle-ci. */
+     ascendant sur celle-ci.
+
+     La colonne des stations fait exception quand un ordre manuel existe : elle
+     boucle sur trois etats plutot que deux, et le troisieme rend l'ordre ecrit
+     en configuration. Sans cette sortie, un clic malheureux enfermait la carte
+     dans un tri alphabetique jusqu'au rechargement de la page, l'ordre manuel
+     n'ayant aucun en-tete a lui. */
   _toggleSort(key) {
     const active = this._activeSort();
+    if (key === "name" && this._hasManualOrder()) {
+      if (active.key === "manual") {
+        this._sortKey = "name";
+        this._sortDesc = false;
+        return this._resort();
+      }
+      if (active.key === "name" && active.desc) {
+        this._sortKey = "manual";
+        /* Null et non `false` : on rend l'ordre configure tel quel, `sort_desc`
+           compris. */
+        this._sortDesc = null;
+        return this._resort();
+      }
+    }
     if (active.key === key) {
       this._sortDesc = !active.desc;
     } else {
       this._sortKey = key;
       this._sortDesc = false;
     }
+    return this._resort();
+  }
+
+  _resort() {
     this._signature = "";
     this._update();
   }
@@ -655,6 +685,7 @@ class PrixCarburantCard extends HTMLElement {
     table.appendChild(colgroup);
 
     const active = this._activeSort();
+    const manualOrder = this._hasManualOrder();
     const self = this;
     const thead = document.createElement("thead");
     const headRow = document.createElement("tr");
@@ -664,12 +695,22 @@ class PrixCarburantCard extends HTMLElement {
       th.textContent = c.label;
       if (cfg.sortable && c.sortable && c.key) {
         th.classList.add("sortable");
-        th.title = "Trier par " + (c.label || c.key);
-        if (active.key === c.key) {
+        /* L'ordre manuel n'a pas d'en-tete a lui : c'est la colonne des
+           stations qui l'affiche et qui le rend. */
+        const carriesManual = c.key === "name" && manualOrder;
+        const showsManual = carriesManual && active.key === "manual";
+        if (showsManual) {
+          th.title = "Ordre de la liste des stations · cliquer pour trier par nom";
+        } else if (carriesManual && active.key === "name" && active.desc) {
+          th.title = "Revenir à l'ordre de la liste des stations";
+        } else {
+          th.title = "Trier par " + (c.label || c.key);
+        }
+        if (showsManual || active.key === c.key) {
           th.classList.add("sorted");
           const caret = document.createElement("span");
           caret.className = "caret";
-          caret.textContent = active.desc ? "▼" : "▲";
+          caret.textContent = showsManual ? "≡" : active.desc ? "▼" : "▲";
           th.appendChild(caret);
         }
         th.addEventListener("click", function () {

@@ -2,6 +2,11 @@
 
 All notable changes to this project are documented in this file.
 
+## [1.0.2] - 2026-07-31
+
+### Added
+- **La colonne des stations rend l'ordre figé en configuration** : quand `stations` contient une liste, l'en-tête *Station* boucle sur trois états au lieu de deux — nom croissant (▲), nom décroissant (▼), puis l'ordre de la liste (≡), `sort_desc` compris. L'ordre manuel n'ayant pas d'en-tête à lui, un clic sur n'importe quelle colonne l'écrasait jusqu'au rechargement de la page, sans aucun moyen d'y revenir depuis la carte. Sans liste `stations`, la colonne garde ses deux états.
+
 ## [1.0.1] - 2026-07-31
 
 ### Performance
