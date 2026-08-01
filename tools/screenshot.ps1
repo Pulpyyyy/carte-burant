@@ -29,8 +29,12 @@ $temp = Join-Path ([System.IO.Path]::GetTempPath()) "prix-carburant-shot"
 
 # Les logos viennent de Wikimedia : `--virtual-time-budget` laisse le temps aux
 # images d'arriver avant la capture, sinon la colonne logo sort vide.
+# `--allow-file-access-from-files` autorise les imports de modules ES en
+# `file://` : sans lui, la carte ne peut pas charger ses fichiers de langue et la
+# page reste vide.
 $common = @(
   "--headless=new", "--disable-gpu", "--hide-scrollbars",
+  "--allow-file-access-from-files",
   "--force-device-scale-factor=2", "--virtual-time-budget=8000",
   "--window-size=$Width,$Height"
 )

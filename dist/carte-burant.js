@@ -20,27 +20,75 @@ console.info(
   "background:none"
 );
 
-/* Colonnes "meta". Tout identifiant de colonne absent de cette table est traite
-   comme un fuel_type de l'integration (E10, SP95, SP98, GPLc, Gazole, E85...). */
-const META = {
-  logo: { label: "", align: "center", width: "40px", sortable: false },
-  name: { label: "Station", align: "left", width: "34%" },
-  brand: { label: "Enseigne", align: "left" },
-  address: { label: "Adresse", align: "left" },
-  city: { label: "Ville", align: "left" },
-  postal_code: { label: "CP", align: "center" },
-  station_id: { label: "ID", align: "center" },
-  distance: { label: "Dist.", align: "center", width: "9%" },
-  updated: { label: "Date", align: "center", width: "11%" }
+/* ---------- traduction ----------
+
+   Un fichier par langue, importe relativement : la ressource est declaree
+   `type: module` dans Home Assistant, le chemin se resout donc tout seul, aussi
+   bien sous `/hacsfiles/carte-burant/` que sous `/local/`. Les imports sont
+   statiques et resolus avant l'execution : aucun rendu ne peut partir dans la
+   mauvaise langue en attendant une requete.
+
+   Ajouter une langue : deposer `lang/xx.js`, l'importer ici, l'ajouter a
+   `STRINGS`, puis etendre `setLanguageFrom`.
+
+   La langue suit celle de Home Assistant : francais des que `hass` annonce une
+   variante de `fr`, anglais sinon. La resolution est faite a l'arrivee de `hass`
+   et retenue dans `currentLang` : toutes les cartes d'une meme installation
+   partagent la langue du frontend, il n'y a donc rien a porter par instance, et
+   `setConfig` peut ainsi traduire ses messages d'erreur meme quand il est appele
+   avant le premier `hass`.
+
+   Les identifiants de carburant (`Gazole`, `E10`, `GPLc`...) viennent du
+   referentiel gouvernemental et restent tels quels en configuration : seule leur
+   etiquette d'affichage est traduite. */
+import fr from "./lang/fr.js";
+import en from "./lang/en.js";
+
+const STRINGS = { fr: fr, en: en };
+
+let currentLang = "en";
+
+/* Le frontend expose la langue dans `locale.language` ; `language` est la forme
+   ancienne, gardee en secours. */
+const setLanguageFrom = function (hass) {
+  const raw =
+    (hass && hass.locale && hass.locale.language) || (hass && hass.language) || "";
+  currentLang = String(raw).toLowerCase().indexOf("fr") === 0 ? "fr" : "en";
 };
 
-const FUEL_LABELS = {
-  GPLc: "GPL",
-  E10: "E10",
-  E85: "E85",
-  SP95: "SP95",
-  SP98: "SP98",
-  Gazole: "Gazole"
+const t = function (key, vars) {
+  let text = STRINGS[currentLang][key];
+  if (text === undefined) text = STRINGS.en[key];
+  if (text === undefined) return key;
+  if (vars) {
+    Object.keys(vars).forEach(function (name) {
+      text = text.split("{" + name + "}").join(vars[name]);
+    });
+  }
+  return text;
+};
+
+/* Colonnes "meta" : geometrie seule, les etiquettes sont dans `STRINGS`. Tout
+   identifiant de colonne absent de cette table est traite comme un fuel_type de
+   l'integration (E10, SP95, SP98, GPLc, Gazole, E85...). */
+const META = {
+  logo: { align: "center", width: "40px", sortable: false },
+  name: { align: "left", width: "34%" },
+  brand: { align: "left" },
+  address: { align: "left" },
+  city: { align: "left" },
+  postal_code: { align: "center" },
+  station_id: { align: "center" },
+  distance: { align: "center", width: "9%" },
+  updated: { align: "center", width: "11%" }
+};
+
+/* Etiquette d'un carburant : traduite quand une traduction existe, sinon
+   l'identifiant du referentiel tel quel (E10, SP95, SP98, E85...). */
+const fuelLabel = function (fuel) {
+  const key = "fuel_" + fuel;
+  const label = STRINGS[currentLang][key] || STRINGS.en[key];
+  return label || fuel;
 };
 
 const DEFAULT_COLUMNS = ["logo", "name", "distance", "E10", "SP95", "SP98", "updated"];
@@ -91,6 +139,14 @@ const STYLE = [
   ".center { text-align: center; }",
   ".right { text-align: right; }",
   ".empty { padding: 16px; color: var(--secondary-text-color); }",
+  /* Barre de retour au tri configure : absente tant qu'aucun clic n'a eu lieu,
+     elle ne coute donc rien en hauteur dans le cas courant. */
+  ".resetbar { display: flex; justify-content: flex-end; padding: 0 2px 4px; }",
+  "button.reset { display: inline-flex; align-items: center; gap: 4px; cursor: pointer;",
+  "  border: none; background: none; padding: 2px 4px; border-radius: 4px;",
+  "  font: inherit; font-size: 0.85em; color: var(--secondary-text-color); }",
+  "button.reset:hover { color: var(--primary-color); background: rgba(127,127,127,0.12); }",
+  "button.reset:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 1px; }",
   "@media (max-width: 600px) {",
   "  table { font-size: 12px; }",
   "  th, td { padding: 3px 4px; }",
@@ -193,8 +249,8 @@ const columnKeyOf = function (entry) {
 
 const columnLabelOf = function (key) {
   const meta = META[key];
-  if (meta) return meta.label || key;
-  return FUEL_LABELS[key] || key;
+  if (meta) return t("col_" + key) || key;
+  return fuelLabel(key);
 };
 
 class PrixCarburantCard extends HTMLElement {
@@ -304,36 +360,36 @@ class PrixCarburantCard extends HTMLElement {
   static getStubConfig(hass) {
     const fuels = PrixCarburantCard.discoverFuels(hass).slice(0, 4);
     return {
-      title: "Prix carburants",
+      title: t("stub_title"),
       stations: [],
       columns: ["logo", "name", "distance"].concat(fuels).concat(["updated"])
     };
   }
 
   setConfig(config) {
-    if (!config) throw new Error("Configuration vide");
+    if (!config) throw new Error(t("err_empty"));
     const cfg = Object.assign({}, DEFAULTS, config);
     if (cfg.columns !== null && !Array.isArray(cfg.columns)) {
-      throw new Error("`columns` doit etre une liste");
+      throw new Error(t("err_columns"));
     }
     if (!Array.isArray(cfg.stations)) {
-      throw new Error("`stations` doit etre une liste d'identifiants de station");
+      throw new Error(t("err_stations"));
     }
     if (!isPlainObject(cfg.station_names)) {
-      throw new Error("`station_names` doit etre une table `station_id: nom`");
+      throw new Error(t("err_station_names"));
     }
     if (!isPlainObject(cfg.station_cities)) {
-      throw new Error("`station_cities` doit etre une table `station_id: ville`");
+      throw new Error(t("err_station_cities"));
     }
     if (!isPlainObject(cfg.logos)) {
-      throw new Error("`logos` doit etre une table `enseigne: fichier`");
+      throw new Error(t("err_logos"));
     }
     /* `toFixed` leve une RangeError hors de 0-100 : sans ce controle, un
        `decimals: -1` ecrit a la main ferait echouer le rendu de chaque prix, et
        une exception dans le rendu emporte la carte entiere. */
     const decimals = Math.round(toNumber(cfg.decimals, DEFAULTS.decimals));
     if (!isFinite(decimals) || decimals < 0 || decimals > 10) {
-      throw new Error("`decimals` doit etre un entier entre 0 et 10");
+      throw new Error(t("err_decimals"));
     }
     cfg.decimals = decimals;
     if (!cfg.columns || cfg.columns.length === 0) cfg.columns = DEFAULT_COLUMNS.slice();
@@ -351,9 +407,16 @@ class PrixCarburantCard extends HTMLElement {
 
   set hass(hass) {
     const previous = this._hass;
+    const before = currentLang;
     this._hass = hass;
-    /* Rien de l'integration n'a bouge : ni recalcul, ni rendu. */
-    if (readingsUnchanged(previous, hass, this._watched, this._stateCount)) return;
+    setLanguageFrom(hass);
+    /* Rien de l'integration n'a bouge : ni recalcul, ni rendu. Un changement de
+       langue du frontend force en revanche un nouveau rendu, tous les libelles
+       en dependant. */
+    if (before === currentLang && readingsUnchanged(previous, hass, this._watched, this._stateCount)) {
+      return;
+    }
+    if (before !== currentLang) this._signature = "";
     this._update();
   }
 
@@ -382,8 +445,8 @@ class PrixCarburantCard extends HTMLElement {
       const isFuel = !meta;
       let label;
       if (spec.name !== undefined) label = spec.name;
-      else if (meta) label = meta.label;
-      else label = (FUEL_LABELS[key] || key) + (cfg.unit ? " " + cfg.unit : "");
+      else if (meta) label = t("col_" + key);
+      else label = fuelLabel(key) + (cfg.unit ? " " + cfg.unit : "");
       let sortable;
       if (spec.sortable !== undefined) sortable = !!spec.sortable;
       else if (meta && meta.sortable === false) sortable = false;
@@ -589,35 +652,40 @@ class PrixCarburantCard extends HTMLElement {
     return this._config.stations.length > 0;
   }
 
-  /* Clic sur un en-tete : meme colonne = on inverse, autre colonne = tri
-     ascendant sur celle-ci.
+  /* Libelle du tri de la configuration, pour le bouton de retour. */
+  _configuredSortLabel() {
+    const cfg = this._config;
+    if (cfg.sort === "manual") return t("sort_manual_label");
+    return columnLabelOf(cfg.sort) + (cfg.sort_desc ? " ▼" : " ▲");
+  }
 
-     La colonne des stations fait exception quand un ordre manuel existe : elle
-     boucle sur trois etats plutot que deux, et le troisieme rend l'ordre ecrit
-     en configuration. Sans cette sortie, un clic malheureux enfermait la carte
-     dans un tri alphabetique jusqu'au rechargement de la page, l'ordre manuel
-     n'ayant aucun en-tete a lui. */
+  /* Clic sur un en-tete : colonne differente = tri ascendant, meme colonne =
+     on inverse, puis un troisieme clic rend la main au tri configure.
+
+     Ce troisieme etat existe parce que le tri de la configuration n'a pas
+     toujours d'en-tete a cliquer : `manual` n'en a aucun par construction, et
+     rien n'oblige a afficher la colonne sur laquelle `sort` porte. Sans lui,
+     un clic malheureux enfermait la carte dans un tri jusqu'au rechargement de
+     la page. Il est offert sur toutes les colonnes, et pas seulement sur celle
+     des stations : c'est la seule facon de rester joignable quelles que soient
+     les colonnes affichees. */
   _toggleSort(key) {
+    const cfg = this._config;
     const active = this._activeSort();
-    if (key === "name" && this._hasManualOrder()) {
-      if (active.key === "manual") {
-        this._sortKey = "name";
-        this._sortDesc = false;
-        return this._resort();
-      }
-      if (active.key === "name" && active.desc) {
-        this._sortKey = "manual";
-        /* Null et non `false` : on rend l'ordre configure tel quel, `sort_desc`
-           compris. */
-        this._sortDesc = null;
-        return this._resort();
-      }
-    }
-    if (active.key === key) {
-      this._sortDesc = !active.desc;
-    } else {
+    if (active.key !== key) {
       this._sortKey = key;
       this._sortDesc = false;
+    } else if (!active.desc) {
+      this._sortDesc = true;
+    } else if (cfg.sort === key && !!cfg.sort_desc === true) {
+      /* Le tri configure est deja l'etat descendant : il n'y a pas de
+         troisieme etat a distinguer, on boucle simplement. */
+      this._sortDesc = false;
+    } else {
+      /* Null et non une valeur : on rend le tri configure tel quel,
+         `sort_desc` compris. */
+      this._sortKey = null;
+      this._sortDesc = null;
     }
     return this._resort();
   }
@@ -657,14 +725,37 @@ class PrixCarburantCard extends HTMLElement {
     this._cardNode = card;
     root.appendChild(card);
 
+    const self = this;
+
     if (!rows.length) {
       const empty = document.createElement("div");
       empty.className = "empty";
       empty.textContent = cfg.stations.length
-        ? "Aucune des stations demandées n'est remontée par l'intégration."
-        : "Aucune station : vérifie l'intégration Prix Carburant.";
+        ? t("no_wanted_station")
+        : t("no_station");
       wrap.appendChild(empty);
       return;
+    }
+
+    /* Retour au tri configure. Le troisieme clic sur un en-tete fait la meme
+       chose, mais il se devine mal et suppose une colonne a portee : cette
+       barre est le chemin visible, et elle ne depend d'aucune colonne. */
+    if (this._sortKey !== null) {
+      const bar = document.createElement("div");
+      bar.className = "resetbar";
+      const reset = document.createElement("button");
+      reset.type = "button";
+      reset.className = "reset";
+      reset.textContent = "↺ " + this._configuredSortLabel();
+      reset.title = t("sort_reset");
+      reset.setAttribute("aria-label", t("sort_reset"));
+      reset.addEventListener("click", function () {
+        self._sortKey = null;
+        self._sortDesc = null;
+        self._resort();
+      });
+      bar.appendChild(reset);
+      wrap.appendChild(bar);
     }
 
     const columns = this._columns();
@@ -686,7 +777,6 @@ class PrixCarburantCard extends HTMLElement {
 
     const active = this._activeSort();
     const manualOrder = this._hasManualOrder();
-    const self = this;
     const thead = document.createElement("thead");
     const headRow = document.createElement("tr");
     columns.forEach(function (c) {
@@ -695,16 +785,15 @@ class PrixCarburantCard extends HTMLElement {
       th.textContent = c.label;
       if (cfg.sortable && c.sortable && c.key) {
         th.classList.add("sortable");
-        /* L'ordre manuel n'a pas d'en-tete a lui : c'est la colonne des
-           stations qui l'affiche et qui le rend. */
-        const carriesManual = c.key === "name" && manualOrder;
-        const showsManual = carriesManual && active.key === "manual";
+        /* L'ordre manuel n'a pas d'en-tete a lui : quand la colonne des
+           stations est affichee, c'est elle qui le signale. */
+        const showsManual = c.key === "name" && manualOrder && active.key === "manual";
         if (showsManual) {
-          th.title = "Ordre de la liste des stations · cliquer pour trier par nom";
-        } else if (carriesManual && active.key === "name" && active.desc) {
-          th.title = "Revenir à l'ordre de la liste des stations";
+          th.title = t("sort_manual_header");
+        } else if (active.key === c.key && active.desc) {
+          th.title = t("sort_back_to", { label: self._configuredSortLabel() });
         } else {
-          th.title = "Trier par " + (c.label || c.key);
+          th.title = t("sort_by", { label: c.label || c.key });
         }
         if (showsManual || active.key === c.key) {
           th.classList.add("sorted");
@@ -803,7 +892,7 @@ class PrixCarburantCard extends HTMLElement {
       }
       case "updated": {
         td.textContent = row.updated
-          ? new Date(row.updated).toLocaleDateString("fr-FR", {
+          ? new Date(row.updated).toLocaleDateString(currentLang === "fr" ? "fr-FR" : "en-GB", {
               day: "2-digit",
               month: "2-digit",
               year: "2-digit"
@@ -826,18 +915,9 @@ class PrixCarburantCard extends HTMLElement {
 
 /* ---------- editeur graphique ---------- */
 
-const EDITOR_LABELS = {
-  title: "Titre",
-  show_title: "Afficher le titre",
-  sort: "Tri par défaut",
-  sort_desc: "Tri décroissant",
-  sortable: "En-têtes cliquables pour trier",
-  decimals: "Décimales",
-  unit: "Unité affichée dans l'en-tête",
-  highlight: "Colorer le prix le plus bas / le plus haut",
-  more_info: "Clic sur une ligne = fiche de l'entité",
-  logo_path: "Préfixe des logos (ex. /local/images/brands/)"
-};
+/* Champs de l'editeur ayant un texte d'aide sous le libelle. On n'en met que la
+   ou le libelle ne suffit pas : une aide sous chaque champ ne se lit plus. */
+const EDITOR_HELPED = ["sort", "sortable", "unit", "decimals", "more_info"];
 
 const EDITOR_STYLE = [
   ":host { display: block; }",
@@ -945,15 +1025,30 @@ class PrixCarburantCardEditor extends HTMLElement {
 
   set hass(hass) {
     const previous = this._hass;
+    const before = currentLang;
     this._hass = hass;
-    if (readingsUnchanged(previous, hass, this._watched, this._stateCount)) return;
-    this._render();
+    setLanguageFrom(hass);
+    if (before === currentLang && readingsUnchanged(previous, hass, this._watched, this._stateCount)) {
+      return;
+    }
+    /* Changement de langue : tous les libelles en dependent, on reconstruit. */
+    if (before !== currentLang) this._rebuild();
+    else this._render();
   }
 
   /* Emet la nouvelle configuration. On nettoie les tables vides pour ne pas
      polluer le YAML avec `station_names: {}`. */
   _emit(patch) {
     const next = Object.assign({}, this._config, patch);
+    /* L'ordre personnalise n'a de sens qu'avec une liste ecrite : sans elle,
+       toutes les stations sont a egalite et le tri retombe silencieusement sur
+       le nom. On fige donc la liste au moment ou l'utilisateur choisit cet
+       ordre, plutot que de lui laisser un tri qui ne fait rien. */
+    if (next.sort === "manual" && (!next.stations || !next.stations.length)) {
+      next.stations = PrixCarburantCard.discoverStations(this._hass).map(function (s) {
+        return s.sid;
+      });
+    }
     ["station_names", "station_cities", "logos"].forEach(function (key) {
       const table = next[key];
       if (isPlainObject(table) && !Object.keys(table).length) delete next[key];
@@ -981,23 +1076,30 @@ class PrixCarburantCardEditor extends HTMLElement {
 
   _schemaSort() {
     const fuels = PrixCarburantCard.discoverFuels(this._hass);
-    /* Toute colonne triable par un clic sur son en-tete doit aussi etre
-       proposee ici : le menu et les en-tetes designent le meme tri. */
+    /* L'ordre personnalise vient en tete et porte le marqueur affiche par la
+       carte : c'est le seul choix qui ne trie sur aucune donnee, il ne se lit
+       pas comme les autres et ne doit donc pas se perdre au milieu d'eux.
+       Toute colonne triable par un clic sur son en-tete est proposee ici :
+       le menu et les en-tetes designent le meme tri. */
     const sorts = [
-      { value: "distance", label: "Distance" },
-      { value: "name", label: "Nom" },
-      { value: "brand", label: "Enseigne" },
-      { value: "address", label: "Adresse" },
-      { value: "city", label: "Ville" },
-      { value: "postal_code", label: "Code postal" },
-      { value: "station_id", label: "Identifiant de station" },
-      { value: "updated", label: "Date de relevé" },
-      { value: "manual", label: "Ordre de la liste des stations" }
-    ].concat(
-      fuels.map(function (f) {
-        return { value: f, label: "Prix " + (FUEL_LABELS[f] || f) };
+      "manual",
+      "distance",
+      "name",
+      "brand",
+      "address",
+      "city",
+      "postal_code",
+      "station_id",
+      "updated"
+    ]
+      .map(function (key) {
+        return { value: key, label: t("opt_" + key) };
       })
-    );
+      .concat(
+        fuels.map(function (f) {
+          return { value: f, label: t("opt_price", { fuel: fuelLabel(f) }) };
+        })
+      );
     return [
       { name: "sort", selector: { select: { mode: "dropdown", options: sorts } } },
       { name: "sort_desc", selector: { boolean: {} } },
@@ -1169,7 +1271,7 @@ class PrixCarburantCardEditor extends HTMLElement {
       const active = item.index !== -1;
       if (!active && !separated) {
         separated = true;
-        if (cfg.columns.length) body.appendChild(self._separator("Masquées"));
+        if (cfg.columns.length) body.appendChild(self._separator(t("hidden")));
       }
       const custom =
         isPlainObject(item.entry) && item.entry.name !== undefined ? item.entry.name : null;
@@ -1179,7 +1281,7 @@ class PrixCarburantCardEditor extends HTMLElement {
 
       const toggle = self._switch(
         active,
-        (active ? "Masquer" : "Afficher") + " la colonne " + columnLabelOf(item.key),
+        t(active ? "hide_column" : "show_column", { label: columnLabelOf(item.key) }),
         function () {
           self._toggleColumn(item.key, !active);
         }
@@ -1187,22 +1289,22 @@ class PrixCarburantCardEditor extends HTMLElement {
       /* La derniere colonne active ne peut pas etre retiree : une liste vide
          serait reinterpretee comme "colonnes par defaut". */
       if (active && cfg.columns.length === 1) {
-        self._lockSwitch(toggle, "Au moins une colonne doit rester affichée");
+        self._lockSwitch(toggle, t("lock_column"));
       }
       row.appendChild(toggle);
 
       row.appendChild(
         self._label(
           custom !== null ? String(custom) : columnLabelOf(item.key),
-          custom !== null ? item.key : isFuel ? "prix " + item.key : null
+          custom !== null ? item.key : isFuel ? t("price_of", { fuel: item.key }) : null
         )
       );
 
-      const up = self._button("▲", "Monter " + columnLabelOf(item.key), function () {
+      const up = self._button("▲", t("move_up", { label: columnLabelOf(item.key) }), function () {
         self._moveColumn(item.index, -1);
       });
       up.disabled = !active || item.index === 0;
-      const down = self._button("▼", "Descendre " + columnLabelOf(item.key), function () {
+      const down = self._button("▼", t("move_down", { label: columnLabelOf(item.key) }), function () {
         self._moveColumn(item.index, 1);
       });
       down.disabled = !active || item.index === cfg.columns.length - 1;
@@ -1290,15 +1392,23 @@ class PrixCarburantCardEditor extends HTMLElement {
 
   /* ---------- panneau "stations" ---------- */
 
+  /* Liste effective des stations retenues. `stations: []` signifie "toutes" :
+     l'editeur affiche alors toutes les stations connues comme cochees, dans
+     l'ordre de l'integration, et la premiere action de l'utilisateur fige cette
+     liste en configuration. */
+  _effectiveStations(known) {
+    if (this._config.stations.length) return this._config.stations.slice();
+    return known.map(function (s) {
+      return s.sid;
+    });
+  }
+
   /* Meme logique que les colonnes : toutes les stations connues sont listees,
-     les affichees d'abord. `stations: []` en configuration signifie "toutes, y
-     compris celles que l'integration ajoutera plus tard" : c'est l'interrupteur
-     de tete, et il verrouille les autres. */
+     les retenues d'abord, dans leur ordre d'affichage. */
   _renderStations() {
     const body = this._panelStations._body;
     const cfg = this._config;
     const known = PrixCarburantCard.discoverStations(this._hass);
-    const all = !cfg.stations.length;
     const filter = (this._stationFilter || "").toLowerCase();
     const signature =
       JSON.stringify(cfg.stations) +
@@ -1319,43 +1429,21 @@ class PrixCarburantCardEditor extends HTMLElement {
 
     const self = this;
 
-    const head = document.createElement("div");
-    head.className = "row head-row";
-    head.appendChild(
-      this._switch(all, "Suivre automatiquement toutes les stations", function (checked) {
-        self._emit({
-          stations: checked
-            ? []
-            : known.map(function (s) {
-                return s.sid;
-              })
-        });
-      })
-    );
-    head.appendChild(
-      this._label(
-        "Toutes les stations",
-        all ? "les futures stations seront ajoutées" : "liste figée ci-dessous"
-      )
-    );
-    body.appendChild(head);
-
     if (!known.length) {
       const empty = document.createElement("div");
       empty.className = "empty";
-      empty.textContent = "Aucune station remontée par l'intégration.";
+      empty.textContent = t("ed_no_station");
       body.appendChild(empty);
       return;
     }
 
-    /* Ordre affiche : celui de la configuration, puis les stations exclues. */
-    const active = all
-      ? []
-      : cfg.stations.filter(function (sid) {
-          return known.some(function (s) {
-            return s.sid === sid;
-          });
-        });
+    /* Ordre affiche : les stations retenues dans l'ordre voulu, puis les
+       exclues. */
+    const active = this._effectiveStations(known).filter(function (sid) {
+      return known.some(function (s) {
+        return s.sid === sid;
+      });
+    });
     const entries = active
       .map(function (sid, index) {
         const found = known.filter(function (s) {
@@ -1382,7 +1470,7 @@ class PrixCarburantCardEditor extends HTMLElement {
     if (!matching.length) {
       const empty = document.createElement("div");
       empty.className = "empty";
-      empty.textContent = "Aucune station ne correspond à « " + this._stationFilter + " ».";
+      empty.textContent = t("ed_no_match", { filter: this._stationFilter });
       body.appendChild(empty);
       return;
     }
@@ -1390,27 +1478,25 @@ class PrixCarburantCardEditor extends HTMLElement {
     let separated = false;
     matching.forEach(function (item) {
       const station = item.station;
-      const on = all || item.index !== -1;
+      const on = item.index !== -1;
       if (!on && !separated) {
         separated = true;
-        if (active.length) body.appendChild(self._separator("Masquées"));
+        if (active.length) body.appendChild(self._separator(t("hidden")));
       }
       const row = document.createElement("div");
       row.className = on ? "row" : "row off";
 
       const toggle = self._switch(
         on,
-        (on ? "Masquer" : "Afficher") + " " + station.name,
+        t(on ? "hide_station" : "show_station", { label: station.name }),
         function () {
           self._toggleStation(station.sid, !on, known);
         }
       );
-      /* Tout desactiver reviendrait a `stations: []`, soit "toutes" : on garde
-         au moins une station active. */
-      if (all) {
-        self._lockSwitch(toggle, "Mode automatique : coupe « Toutes les stations » d'abord");
-      } else if (on && active.length === 1) {
-        self._lockSwitch(toggle, "Au moins une station doit rester affichée");
+      /* Tout decocher ecrirait `stations: []`, que la carte relit comme
+         "toutes" : l'editeur ferait donc l'inverse de ce qui est demande. */
+      if (on && active.length === 1) {
+        self._lockSwitch(toggle, t("lock_station"));
       }
       row.appendChild(toggle);
 
@@ -1420,14 +1506,14 @@ class PrixCarburantCardEditor extends HTMLElement {
       details.push(station.sid);
       row.appendChild(self._label(station.name, details.join(" · ")));
 
-      const up = self._button("▲", "Monter " + station.name, function () {
-        self._moveStation(item.index, -1);
+      const up = self._button("▲", t("move_up", { label: station.name }), function () {
+        self._moveStation(item.index, -1, known);
       });
-      up.disabled = all || !on || item.index === 0 || !!filter;
-      const down = self._button("▼", "Descendre " + station.name, function () {
-        self._moveStation(item.index, 1);
+      up.disabled = !on || item.index === 0 || !!filter;
+      const down = self._button("▼", t("move_down", { label: station.name }), function () {
+        self._moveStation(item.index, 1, known);
       });
-      down.disabled = all || !on || item.index === active.length - 1 || !!filter;
+      down.disabled = !on || item.index === active.length - 1 || !!filter;
 
       row.appendChild(up);
       row.appendChild(down);
@@ -1442,8 +1528,8 @@ class PrixCarburantCardEditor extends HTMLElement {
     const input = document.createElement("input");
     input.className = "txt filter";
     input.type = "search";
-    input.placeholder = "Filtrer les stations…";
-    input.setAttribute("aria-label", "Filtrer les stations");
+    input.placeholder = t("ed_filter");
+    input.setAttribute("aria-label", t("ed_filter_aria"));
     input.addEventListener("input", function () {
       self._stationFilter = input.value.trim();
       self._sigStations = null;
@@ -1453,13 +1539,8 @@ class PrixCarburantCardEditor extends HTMLElement {
   }
 
   _toggleStation(sid, enable, known) {
-    const cfg = this._config;
-    /* Premiere exclusion depuis "toutes" : on materialise la liste. */
-    const current = cfg.stations.length
-      ? cfg.stations.slice()
-      : known.map(function (s) {
-          return s.sid;
-        });
+    /* Premiere action depuis "toutes" : on materialise la liste. */
+    const current = this._effectiveStations(known);
     let next;
     if (enable) {
       next = current.indexOf(sid) === -1 ? current.concat([sid]) : current;
@@ -1472,8 +1553,10 @@ class PrixCarburantCardEditor extends HTMLElement {
     this._emit({ stations: next });
   }
 
-  _moveStation(index, delta) {
-    const stations = this._config.stations.slice();
+  /* Reordonner fige la liste, comme cocher ou decocher : sans `stations` ecrit
+     en configuration, il n'y a nulle part ou ranger cet ordre. */
+  _moveStation(index, delta, known) {
+    const stations = this._effectiveStations(known || []);
     const target = index + delta;
     if (index < 0 || target < 0 || target >= stations.length) return;
     const moved = stations.splice(index, 1)[0];
@@ -1515,7 +1598,7 @@ class PrixCarburantCardEditor extends HTMLElement {
     if (!shown.length) {
       const empty = document.createElement("div");
       empty.className = "empty";
-      empty.textContent = "Aucune station remontée par l'intégration.";
+      empty.textContent = t("ed_no_station");
       body.appendChild(empty);
       return;
     }
@@ -1523,8 +1606,8 @@ class PrixCarburantCardEditor extends HTMLElement {
     const self = this;
     const legend = document.createElement("div");
     legend.className = "row head-row";
-    legend.appendChild(this._label("Station", null));
-    ["Nom affiché", "Ville affichée"].forEach(function (text) {
+    legend.appendChild(this._label(t("ed_station"), null));
+    [t("ed_col_name"), t("ed_col_city")].forEach(function (text) {
       const cell = document.createElement("div");
       cell.className = "col-head";
       cell.textContent = text;
@@ -1542,7 +1625,7 @@ class PrixCarburantCardEditor extends HTMLElement {
         })
       );
       row.appendChild(
-        self._textField(cfg.station_cities[station.sid], station.city || "Ville", function (value) {
+        self._textField(cfg.station_cities[station.sid], station.city || t("ed_city"), function (value) {
           self._emitTable("station_cities", station.sid, value);
         })
       );
@@ -1579,7 +1662,7 @@ class PrixCarburantCardEditor extends HTMLElement {
     if (!brands.length) {
       const empty = document.createElement("div");
       empty.className = "empty";
-      empty.textContent = "Aucune enseigne remontée par l'intégration.";
+      empty.textContent = t("ed_no_brand");
       body.appendChild(empty);
       return;
     }
@@ -1601,7 +1684,7 @@ class PrixCarburantCardEditor extends HTMLElement {
         preview.alt = "";
         preview.addEventListener("error", function () {
           box.classList.add("broken");
-          box.title = "Image introuvable : " + src;
+          box.title = t("ed_logo_broken", { src: src });
           preview.remove();
         });
         box.appendChild(preview);
@@ -1611,7 +1694,7 @@ class PrixCarburantCardEditor extends HTMLElement {
       row.appendChild(self._label(brand.label, brand.key));
 
       row.appendChild(
-        self._textField(cfg.logos[brand.key], "fichier.png ou URL", function (value) {
+        self._textField(cfg.logos[brand.key], t("ed_logo_placeholder"), function (value) {
           self._emitTable("logos", brand.key, value);
         })
       );
@@ -1627,7 +1710,12 @@ class PrixCarburantCardEditor extends HTMLElement {
   _form(schemaName) {
     const form = document.createElement("ha-form");
     form.computeLabel = function (schema) {
-      return EDITOR_LABELS[schema.name] || schema.name;
+      return t("ed_" + schema.name) || schema.name;
+    };
+    /* `computeHelper` place un texte sous le champ : c'est la ou Home Assistant
+       attend les explications, plutot que dans un paragraphe separe. */
+    form.computeHelper = function (schema) {
+      return EDITOR_HELPED.indexOf(schema.name) === -1 ? "" : t("help_" + schema.name);
     };
     const self = this;
     form.addEventListener("value-changed", function (ev) {
@@ -1647,42 +1735,24 @@ class PrixCarburantCardEditor extends HTMLElement {
 
     /* 1. Quelles stations. Seule section ouverte d'emblee : c'est la premiere
        decision, les autres ont toutes une valeur par defaut acceptable. */
-    this._panelStations = this._section(
-      "Stations",
-      "Interrupteur pour afficher ou masquer, ▲ / ▼ pour ordonner (tri « Ordre de la " +
-        "liste des stations »).",
-      true
-    );
+    this._panelStations = this._section(t("sec_stations"), t("sec_stations_hint"), true);
     this._filterField = this._stationFilterField();
     this._panelStations._inner.insertBefore(this._filterField, this._panelStations._body);
 
     /* 2. Dans quel ordre. */
-    this._panelSort = this._section("Tri", "Ordre de départ du tableau et tri au clic.", false);
+    this._panelSort = this._section(t("sec_sort"), t("sec_sort_hint"), false);
     this._panelSort._body.appendChild(this._form("sort"));
 
     /* 3. Quelles colonnes, dans quel ordre. */
-    this._panelColumns = this._section(
-      "Colonnes",
-      "Interrupteur pour afficher ou masquer, ▲ / ▼ pour ordonner. Les colonnes " +
-        "affichées sont regroupées en tête de liste, dans leur ordre d'affichage.",
-      false
-    );
+    this._panelColumns = this._section(t("sec_columns"), t("sec_columns_hint"), false);
 
     /* 4. Habillage. */
-    this._panelDisplay = this._section("Affichage", null, false);
+    this._panelDisplay = this._section(t("sec_display"), null, false);
     this._panelDisplay._body.appendChild(this._form("display"));
 
-    this._panelNames = this._section(
-      "Noms et villes",
-      "Laisser vide pour garder la valeur fournie par l'intégration.",
-      false
-    );
+    this._panelNames = this._section(t("sec_names"), t("sec_names_hint"), false);
 
-    this._panelLogos = this._section(
-      "Logos des enseignes",
-      "Fichier relatif au préfixe ci-dessous, ou URL / chemin absolu.",
-      false
-    );
+    this._panelLogos = this._section(t("sec_logos"), t("sec_logos_hint"), false);
     /* Le prefixe est insere avant le corps du panneau, que `_renderLogos` vide. */
     this._panelLogos._inner.insertBefore(this._form("logoPath"), this._panelLogos._body);
 
@@ -1712,10 +1782,10 @@ class PrixCarburantCardEditor extends HTMLElement {
 
     this._panelStations._setSummary(
       !known.length
-        ? "aucune station détectée"
+        ? t("sum_no_station")
         : cfg.stations.length
-          ? cfg.stations.length + " sur " + known.length
-          : "toutes (" + known.length + ")"
+          ? t("sum_some", { count: cfg.stations.length, total: known.length })
+          : t("sum_all", { count: known.length })
     );
 
     const sorts = this._schemaSort()[0].selector.select.options;
@@ -1724,25 +1794,27 @@ class PrixCarburantCardEditor extends HTMLElement {
       if (option.value === cfg.sort) sortLabel = option.label;
     });
     this._panelSort._setSummary(
-      sortLabel +
-        (cfg.sort_desc ? " ↓" : " ↑") +
-        (cfg.sortable ? "" : " · en-têtes non cliquables")
+      sortLabel + (cfg.sort_desc ? " ↓" : " ↑") + (cfg.sortable ? "" : t("sum_not_sortable"))
     );
 
-    this._panelColumns._setSummary(cfg.columns.length + " sur " + total);
+    this._panelColumns._setSummary(t("sum_some", { count: cfg.columns.length, total: total }));
 
-    const titleState = cfg.show_title === false || !cfg.title ? "sans titre" : cfg.title;
-    this._panelDisplay._setSummary(titleState + " · " + cfg.decimals + " décimales");
+    const titleState = cfg.show_title === false || !cfg.title ? t("sum_no_title") : cfg.title;
+    this._panelDisplay._setSummary(
+      titleState + " · " + t("sum_decimals", { count: cfg.decimals })
+    );
 
     const overrides =
       Object.keys(cfg.station_names).length + Object.keys(cfg.station_cities).length;
     this._panelNames._setSummary(
-      overrides ? overrides + (overrides > 1 ? " surcharges" : " surcharge") : "aucune surcharge"
+      overrides
+        ? t(overrides > 1 ? "sum_overrides" : "sum_override", { count: overrides })
+        : t("sum_no_override")
     );
 
     const logos = Object.keys(cfg.logos).length;
     this._panelLogos._setSummary(
-      logos ? logos + (logos > 1 ? " logos définis" : " logo défini") : "aucun logo"
+      logos ? t(logos > 1 ? "sum_logos" : "sum_logo", { count: logos }) : t("sum_no_logo")
     );
   }
 
@@ -1789,24 +1861,28 @@ const entitySuggestion = function (hass, entityId) {
   if (attrs.station_id === undefined || attrs.station_id === null) return null;
   if (!attrs.fuel_type) return null;
 
+  /* Le selecteur peut interroger la carte avant tout `set hass` : on resout la
+     langue ici aussi, l'objet `hass` etant fourni en argument. */
+  setLanguageFrom(hass);
+
   const sid = String(attrs.station_id);
   const fuel = String(attrs.fuel_type);
-  const fuelLabel = FUEL_LABELS[fuel] || fuel;
+  const label = fuelLabel(fuel);
   const allFuels = PrixCarburantCard.discoverFuels(hass);
   const stationName = stationLabel(attrs, sid);
 
   return [
     {
-      label: "Comparer les stations — " + fuelLabel,
+      label: t("suggest_compare", { fuel: label }),
       config: {
         type: "custom:prix-carburant-card",
-        title: "Prix " + fuelLabel,
+        title: t("suggest_title", { fuel: label }),
         columns: ["logo", "name", "distance", fuel, "updated"],
         sort: fuel
       }
     },
     {
-      label: "Cette station, tous carburants",
+      label: t("suggest_station"),
       config: {
         type: "custom:prix-carburant-card",
         title: stationName,
@@ -1826,9 +1902,20 @@ const alreadyRegistered = window.customCards.some(function (entry) {
 if (!alreadyRegistered) {
   window.customCards.push({
     type: "prix-carburant-card",
-    name: "Prix Carburant",
+    /* Le selecteur lit ces champs une seule fois, au chargement du fichier :
+       ils sont donc resolus dans la langue par defaut tant que le frontend n'a
+       pas encore parle. C'est le seul endroit ou la traduction ne peut pas
+       suivre un changement de langue sans rechargement de la page. */
+    get name() {
+      return t("card_name");
+    },
     preview: true,
-    description: "Tableau des prix des carburants : choix des stations et des colonnes.",
+    get description() {
+      return t("card_description");
+    },
+    /* Convention du selecteur de cartes : ajoute un lien "Documentation" a cote
+       de la carte dans la liste. */
+    documentationURL: "https://github.com/Pulpyyyy/carte-burant",
     getEntitySuggestion: entitySuggestion
   });
 }

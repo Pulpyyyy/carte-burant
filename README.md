@@ -16,6 +16,7 @@ une colonne par carburant.
   remonte réellement.
 - Sélecteur de carte **« par entité »** de HA 2026.6+ : cliquer sur un sensor de
   l'intégration propose deux mises en page prêtes à l'emploi.
+- **Français et anglais**, carte et éditeur, suivant la langue de Home Assistant.
 
 Version de la carte : **1.0.2** · Home Assistant **2024.4+** (le sélecteur par entité
 demande 2026.6+, il est simplement ignoré avant).
@@ -28,16 +29,30 @@ d'Aohzan, qui fournit les données. Elle interroge le flux public
 et crée un sensor par couple (station, carburant). La carte ne fait que lire ces entités :
 sans l'intégration, elle n'a rien à afficher.
 
-**HACS** — dépôt personnalisé, catégorie *Lovelace*.
+**HACS** — dépôt personnalisé, catégorie *Lovelace*. HACS installe l'archive de la
+release, qui contient la carte **et** son dossier `lang/`.
 
-**Manuellement** — copier `dist/carte-burant.js` dans
-`config/www/community/carte-burant/`, puis *Paramètres → Tableaux de bord →
-Ressources* :
+**Manuellement** — télécharger `carte-burant.zip` depuis la
+[dernière release](https://github.com/Pulpyyyy/carte-burant/releases/latest) et l'extraire
+dans `config/www/community/carte-burant/`. Le dossier doit contenir :
+
+```
+config/www/community/carte-burant/
+├── carte-burant.js
+└── lang/
+    ├── fr.js
+    └── en.js
+```
+
+Puis *Paramètres → Tableaux de bord → Ressources* :
 
 ```yaml
 url: /hacsfiles/carte-burant/carte-burant.js
 type: module
 ```
+
+Le `type: module` n'est pas décoratif : la carte importe ses fichiers de langue par chemin
+relatif. Sans le dossier `lang/` à côté d'elle, elle ne se charge pas du tout.
 
 ## Le minimum qui marche
 
@@ -203,24 +218,27 @@ inverse le sens (▲ / ▼ apparaît sur la colonne active). Ce tri est **tempor
 n'est pas écrit dans la configuration et repart de `sort` au rechargement de la page.
 La colonne `logo` n'est jamais cliquable.
 
-### Retrouver son ordre de stations
+### Revenir au tri configuré
 
-Dès que `stations` contient une liste, l'ordre que tu y as figé — au clavier ou avec les
-▲ / ▼ de l'éditeur — devient le **troisième état** de la colonne `name` :
+Le tri de la configuration n'a pas toujours d'en-tête à cliquer : `manual` n'en a aucun
+par construction, et rien n'oblige à afficher la colonne sur laquelle `sort` porte. Deux
+chemins de retour, qui font exactement la même chose :
 
-| Clic sur *Station* | Marqueur | Résultat |
-|---|---|---|
-| 1 | ▲ | Nom croissant |
-| 2 | ▼ | Nom décroissant |
-| 3 | ≡ | **Ton ordre**, `sort_desc` compris |
+**Le bouton ↺**, au-dessus du tableau. Il n'apparaît **que** lorsqu'un tri au clic est
+actif, et affiche la destination : `↺ ≡ Ordre personnalisé`, `↺ Distance ▲`… C'est le
+chemin fiable, il ne dépend d'aucune colonne affichée.
 
-Sans ce cycle, un clic malheureux enfermait la carte dans un tri alphabétique jusqu'au
-rechargement de la page : l'ordre manuel n'a pas d'en-tête à lui, rien ne permettait d'y
-revenir. Le marqueur ≡ signale que le tableau suit ta liste. Trier sur une autre colonne
-puis recliquer sur *Station* repart normalement du nom croissant.
+**Le troisième clic** sur l'en-tête courant, sur n'importe quelle colonne :
 
-Sans liste `stations` (donc « toutes les stations »), il n'y a pas d'ordre manuel à
-rétablir et la colonne garde ses deux états.
+| Clic | Résultat |
+|---|---|
+| 1 | Croissant sur cette colonne |
+| 2 | Décroissant |
+| 3 | Retour au tri configuré, `sort_desc` compris |
+
+Quand le tri configuré est déjà l'état descendant de la colonne cliquée, il n'y a rien à
+distinguer et le cycle reste à deux états. Le marqueur ≡ apparaît sur la colonne `name`
+quand le tableau suit ton ordre personnalisé et que cette colonne est affichée.
 
 ## Coloration des prix
 
@@ -275,8 +293,8 @@ Six sections repliables, dans l'ordre des décisions :
 
 | Section | Contenu |
 |---|---|
-| **Stations** | Interrupteur par station, ▲ / ▼ pour ordonner, interrupteur de tête « Toutes les stations ». Filtre au-delà de 8 stations ; les flèches sont neutralisées tant qu'un filtre est actif, l'ordre n'ayant pas de sens sur une liste partielle. |
-| **Tri** | `sort`, `sort_desc`, `sortable`. |
+| **Stations** | Une case par station, ▲ / ▼ pour ordonner. Filtre au-delà de 8 stations ; les flèches sont neutralisées tant qu'un filtre est actif, l'ordre n'ayant pas de sens sur une liste partielle. |
+| **Tri** | `sort`, `sort_desc`, `sortable`. « ≡ Ordre personnalisé des stations » est en tête de liste, séparé des tris portant sur une donnée. |
 | **Colonnes** | Interrupteur par colonne, ▲ / ▼ pour ordonner. |
 | **Affichage** | `title`, `show_title`, `unit`, `decimals` (0 à 3 dans l'éditeur, jusqu'à 10 en YAML), `highlight`, `more_info`. |
 | **Noms et villes** | Un champ nom et un champ ville par station affichée, plus les surcharges devenues orphelines. |
@@ -290,11 +308,16 @@ Seule *Stations* est ouverte au départ ; chaque section repliée affiche son é
 qu'elle contient. Dans les listes à interrupteurs, les éléments affichés sont regroupés en
 tête, un séparateur *Masquées* marque la frontière.
 
-Trois verrous, avec leur explication en infobulle : la dernière colonne affichée et la
-dernière station affichée ne peuvent pas être coupées — une liste vide signifiant
-« toutes » ou « celles par défaut », l'éditeur ferait exactement l'inverse de ce qui est
-demandé ; et tant que « Toutes les stations » est actif, les interrupteurs de station sont
-figés, il faut d'abord couper le mode automatique pour figer la liste.
+Deux verrous, avec leur explication en infobulle : la dernière colonne et la dernière
+station cochées ne peuvent pas être décochées — une liste vide signifiant « toutes » ou
+« celles par défaut », l'éditeur ferait exactement l'inverse de ce qui est demandé.
+
+**Liste figée à la première modification.** Tant que la section *Stations* n'est pas
+touchée, `stations` reste absent de la configuration et la carte suit toutes les stations
+de l'intégration, futures comprises — toutes les cases sont donc cochées. Dès que tu en
+décoches une, que tu en réordonnes une, ou que tu choisis « ≡ Ordre personnalisé », la
+liste complète est écrite en configuration et cesse de suivre les ajouts de l'intégration.
+Pour revenir au suivi automatique, il faut retirer `stations` à la main en YAML.
 
 ## Sélecteur de carte « par entité » (HA 2026.6+)
 
@@ -304,6 +327,33 @@ apparaître deux propositions, section *Communauté* :
 - **Comparer les stations — *carburant*** : toutes les stations, la colonne du carburant
   cliqué, triée par prix ;
 - **Cette station, tous carburants** : la station seule, tous ses carburants.
+
+## Langue
+
+La carte et l'éditeur sont traduits en **français** et en **anglais**. La langue suit celle
+du frontend (`hass.locale.language`) : français dès qu'elle commence par `fr` — `fr`,
+`fr-CA`, `fr-BE` —, anglais dans tous les autres cas. Il n'y a aucune option à régler, et
+changer de langue dans Home Assistant met la carte à jour sans recharger la page.
+
+Un fichier par langue dans [`dist/lang/`](dist/lang/), importé statiquement par la carte.
+**Ajouter une langue** tient en trois gestes : copier `lang/fr.js` en `lang/xx.js` et
+traduire les valeurs — les clefs sont communes et rangées dans le même ordre —, l'importer
+en tête de `carte-burant.js`, et l'ajouter à `STRINGS` puis à `setLanguageFrom`. Les
+contributions sont les bienvenues.
+
+Ce qui **n'est pas** traduit, volontairement :
+
+- les identifiants de configuration (`sort`, `columns`, `stations`…), qui sont des clefs
+  YAML et non du texte affiché ;
+- les identifiants de carburant du référentiel gouvernemental. `Gazole`, `E10`, `GPLc`
+  s'écrivent ainsi dans `columns` et dans `sort` quelle que soit la langue — seule leur
+  **étiquette d'affichage** change : `Gazole` devient *Diesel* et `GPLc` devient *LPG* en
+  anglais, `GPL` en français ;
+- les données remontées par l'intégration (noms de stations, villes, adresses).
+
+Le nom et la description affichés dans le sélecteur de cartes sont lus une seule fois au
+chargement du fichier : eux seuls demandent un rechargement de la page après un changement
+de langue.
 
 ## Variables CSS
 

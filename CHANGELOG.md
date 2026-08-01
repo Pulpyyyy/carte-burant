@@ -2,10 +2,21 @@
 
 All notable changes to this project are documented in this file.
 
-## [1.0.2] - 2026-07-31
+## [1.0.2] - 2026-08-01
 
 ### Added
-- **La colonne des stations rend l'ordre figé en configuration** : quand `stations` contient une liste, l'en-tête *Station* boucle sur trois états au lieu de deux — nom croissant (▲), nom décroissant (▼), puis l'ordre de la liste (≡), `sort_desc` compris. L'ordre manuel n'ayant pas d'en-tête à lui, un clic sur n'importe quelle colonne l'écrasait jusqu'au rechargement de la page, sans aucun moyen d'y revenir depuis la carte. Sans liste `stations`, la colonne garde ses deux états.
+- **Retour au tri configuré, par un bouton et par un troisième clic** : le tri de la configuration n'a pas toujours d'en-tête à cliquer — `manual` n'en a aucun par construction, et rien n'oblige à afficher la colonne sur laquelle `sort` porte. Un clic sur n'importe quel en-tête enfermait donc la carte dans ce tri jusqu'au rechargement de la page. Un bouton `↺` apparaît désormais au-dessus du tableau dès qu'un tri au clic est actif, annonce sa destination (`↺ ≡ Ordre personnalisé`, `↺ Distance ▲`…) et ne dépend d'aucune colonne affichée ; le troisième clic sur l'en-tête courant fait la même chose. Le marqueur `≡` signale la colonne `name` quand le tableau suit l'ordre personnalisé.
+
+### Changed
+- **L'interrupteur « Toutes les stations » disparaît de l'éditeur** : les stations se cochent une à une, et toutes le sont tant que `stations` est absent de la configuration. La première modification — décocher, réordonner, ou choisir l'ordre personnalisé — fige la liste complète. Un verrou de moins, et l'état de la section se lit directement dans les cases.
+- **Installation HACS par archive** (`zip_release`) : la carte importe désormais ses fichiers de langue par chemin relatif, l'arborescence `lang/` doit donc arriver intacte sur l'installation. Des assets de release étant des fichiers plats, seul un zip le garantit. L'URL de la ressource ne change pas ; une installation manuelle demande d'extraire l'archive au lieu de copier un fichier.
+- **« ≡ Ordre personnalisé des stations » passe en tête du menu de tri** et porte le marqueur affiché par la carte. C'est le seul choix qui ne trie sur aucune donnée et qui dépend d'un réglage fait ailleurs dans l'éditeur : il ne se lit pas comme les autres et n'a rien à faire au milieu d'eux.
+
+- **Traduction française et anglaise**, carte et éditeur : en-têtes de colonnes, messages, infobulles, libellés et aides de l'éditeur, suggestions du sélecteur par entité, messages d'erreur de configuration et format de date. La langue suit `hass.locale.language` — français dès qu'elle commence par `fr`, anglais sinon — et un changement de langue dans Home Assistant est pris en compte sans recharger la page. Les identifiants de carburant restent ceux du référentiel (`Gazole`, `GPLc`…) en configuration ; seule leur étiquette d'affichage est traduite (*Diesel*, *LPG*). Un fichier par langue dans `dist/lang/`, importé statiquement : ajouter une langue ne touche à rien d'autre.
+- **Textes d'aide sous les champs de l'éditeur** via `computeHelper`, comme le fait Home Assistant dans ses propres éditeurs, et lien *Documentation* dans le sélecteur de cartes (`documentationURL`).
+
+### Fixed
+- **Choisir l'ordre personnalisé sans liste de stations ne produit plus un tri inerte** : toutes les stations étant alors à égalité, le tri retombait silencieusement sur le nom, `sort_desc` compris ignoré. L'éditeur fige désormais la liste au moment où cet ordre est choisi.
 
 ## [1.0.1] - 2026-07-31
 

@@ -70,9 +70,17 @@
   customElements.define("ha-card", HaCard);
 </script>
 
-<script src="../dist/carte-burant.js"></script>
+<!-- Module, comme la ressource declaree dans Home Assistant : les fichiers de
+     langue sont importes relativement par la carte. Ouvrir cette page en
+     `file://` demande donc `--allow-file-access-from-files` a Chrome, ce que
+     fait `screenshot.ps1`. -->
+<script type="module" src="../dist/carte-burant.js"></script>
 
-<script>
+<!-- Module lui aussi : un script classique s'executerait avant le module de la
+     carte, et `prix-carburant-card` ne serait pas encore defini. -->
+<script type="module">
+  await customElements.whenDefined("prix-carburant-card");
+
   const STATIONS = [
     { sid: "75016001", name: "Carrefour Auteuil", brand: "Carrefour",
       address: "1 Avenue du Général Sarrail", city: "Paris", cp: "75016", distance: 7.1,
@@ -157,7 +165,9 @@
       totalaccess: "https://upload.wikimedia.org/wikipedia/fr/thumb/f/f7/Logo_TotalEnergies.svg/250px-Logo_TotalEnergies.svg.png"
     }
   });
-  card.hass = { states: states };
+  /* `locale.language` fixe la langue de la carte : le README etant en francais,
+     les captures le sont aussi. Mettre "en" ici produit la version anglaise. */
+  card.hass = { states: states, locale: { language: "fr" } };
   document.getElementById("host").appendChild(card);
 
   if (location.search.indexOf("dark") !== -1) {

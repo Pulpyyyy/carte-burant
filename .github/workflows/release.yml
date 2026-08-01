@@ -27,13 +27,24 @@ jobs:
 
       - name: Verify dist assets exist
         run: |
-          for f in dist/carte-burant.js; do
+          for f in dist/carte-burant.js dist/lang/fr.js dist/lang/en.js; do
             if [ ! -f "$f" ]; then
               echo "ERROR: required asset '$f' is missing from this tag." >&2
               exit 1
             fi
           done
-          echo "Dist asset confirmed present."
+          echo "All dist assets confirmed present."
+
+      # La carte importe ses fichiers de langue en chemin relatif : HACS doit donc
+      # recreer l'arborescence `lang/` a l'installation, ce que seul un zip
+      # garantit (des assets de release sont des fichiers plats). D'ou
+      # `zip_release` dans hacs.json et cette archive.
+      - name: Build the HACS archive
+        run: |
+          cd dist
+          zip -r ../carte-burant.zip carte-burant.js lang
+          cd ..
+          unzip -l carte-burant.zip
 
       - name: Verify version consistency
         run: |
@@ -78,10 +89,12 @@ jobs:
           This release is automatically available via HACS.
 
           #### Manual
-          1. Download \`carte-burant.js\` from the assets below.
-          2. Place the file in your \`config/www/\` directory.
+          1. Download \`carte-burant.zip\` from the assets below.
+          2. Extract it into \`config/www/community/carte-burant/\`. The folder must
+             end up holding \`carte-burant.js\` **and** the \`lang/\` directory: the
+             card imports its translations relatively and will not load without them.
           3. Add the resource in Home Assistant:
-             - **URL:** \`/local/carte-burant.js\`
+             - **URL:** \`/local/community/carte-burant/carte-burant.js\`
              - **Type:** JavaScript module
           4. Reload your browser.
 
@@ -100,5 +113,8 @@ jobs:
           draft: false
           prerelease: ${{ contains(inputs.tag, '-') }}
           files: |
+            carte-burant.zip
             dist/carte-burant.js
+            dist/lang/fr.js
+            dist/lang/en.js
           fail_on_unmatched_files: true
