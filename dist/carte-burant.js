@@ -11,7 +11,7 @@
  * d'analyse et par les navigateurs anciens.
  */
 
-const CARD_VERSION = "1.0.3";
+const CARD_VERSION = "1.0.4";
 
 console.info(
   `%c 🙂 Prix Carburant Card %c v${CARD_VERSION} %c`,
@@ -104,6 +104,11 @@ const FR = {
   sec_stations: "Stations",
   sec_stations_hint:
     "Cocher les stations à afficher, ▲ / ▼ pour les ordonner. Tant que rien n'est touché ici, la carte suit toutes les stations de l'intégration, futures comprises ; la première modification fige la liste.",
+  order_unused: "Tri du tableau : {sort}. Cet ordre ne l'atteint qu'avec « {manual} ».",
+  order_use: "Suivre cet ordre",
+  order_now: "Le tableau suit maintenant votre ordre.",
+  order_back: "Revenir à {sort}",
+
   sec_sort: "Tri",
   sec_sort_hint:
     "Ordre de départ du tableau. « ≡ Ordre personnalisé » reprend celui de la section Stations ; les autres trient sur une donnée. Un clic sur un en-tête trie à la volée sans rien écrire ici, et la carte propose alors un retour à ce réglage.",
@@ -223,6 +228,11 @@ const EN = {
   sec_stations: "Stations",
   sec_stations_hint:
     "Tick the stations to show, ▲ / ▼ to order them. As long as nothing is changed here, the card follows every station of the integration, future ones included; the first change freezes the list.",
+  order_unused: "Table sorted by: {sort}. This order only reaches it with “{manual}”.",
+  order_use: "Follow this order",
+  order_now: "The table now follows your order.",
+  order_back: "Back to {sort}",
+
   sec_sort: "Sorting",
   sec_sort_hint:
     "Starting order of the table. “≡ Custom order” follows the Stations section; the others sort on a value. Clicking a header sorts on the fly without writing anything here, and the card then offers a way back to this setting.",
@@ -790,6 +800,13 @@ class PrixCarburantCard extends HTMLElement {
        Le rang est indexe une fois pour toutes : chercher dans la liste depuis
        le comparateur multiplierait le cout du tri par sa longueur. */
     if (active.key === "manual") {
+      /* Sans liste `stations`, cet ordre n'a rien a suivre. L'editeur fige la
+         liste au moment ou l'utilisateur le choisit, mais rien n'empeche
+         d'ecrire `sort: manual` seul en YAML : on rend alors l'ordre de
+         l'integration, tel quel. Trier sur le nom, comme le faisait l'egalite
+         generale, revenait a inventer un tri que personne n'a demande. */
+      if (!cfg.stations.length) return active.desc ? rows.reverse() : rows;
+
       const order = new Map();
       cfg.stations.forEach(function (sid, index) {
         if (!order.has(sid)) order.set(sid, index);
@@ -1258,6 +1275,10 @@ class PrixCarburantCardEditor extends HTMLElement {
     this._forms = [];
     this._upgradeWaiting = false;
     this._stationFilter = "";
+    /* Tri d'avant une bascule automatique sur l'ordre personnalise, garde le
+       temps d'en proposer le retour. Hors configuration : rien a ecrire dans le
+       YAML pour un chemin de retour. */
+    this._previousSort = null;
     /* Meme garde que la carte : l'editeur ouvert ne doit pas se reconstruire
        parce qu'une lampe a change d'etat. */
     this._watched = null;
@@ -1690,6 +1711,10 @@ class PrixCarburantCardEditor extends HTMLElement {
     const signature =
       JSON.stringify(cfg.stations) +
       "|" +
+      cfg.sort +
+      "|" +
+      (this._previousSort ? this._previousSort.sort : "") +
+      "|" +
       filter +
       "|" +
       known
@@ -1796,6 +1821,60 @@ class PrixCarburantCardEditor extends HTMLElement {
       row.appendChild(down);
       body.appendChild(row);
     });
+
+    /* Le tableau ne suit cette liste qu'avec le tri "manual" : on dit toujours
+       ou en est le tri, et on propose le geste inverse de celui qui vient
+       d'etre fait. Sous un autre tri, ranger la liste ne se verrait pas : on
+       offre d'y basculer. Apres la bascule faite par une fleche, on offre le
+       retour au tri d'avant. */
+    if (cfg.sort !== "manual") {
+      this._previousSort = null;
+      body.appendChild(
+        this._orderNote(
+          t("order_unused", { manual: t("sort_manual_label"), sort: this._sortLabel() }),
+          t("order_use"),
+          function () {
+            self._emit({ sort: "manual", sort_desc: false });
+          }
+        )
+      );
+    } else if (this._previousSort) {
+      const previous = this._previousSort;
+      body.appendChild(
+        this._orderNote(
+          t("order_now"),
+          t("order_back", { sort: this._sortLabel(previous.sort) }),
+          function () {
+            self._previousSort = null;
+            self._emit({ sort: previous.sort, sort_desc: previous.desc });
+          }
+        )
+      );
+    }
+  }
+
+  /* Rappel de bas de section : un texte discret, et le geste qui va avec. */
+  _orderNote(text, action, onClick) {
+    const note = document.createElement("div");
+    note.className = "row";
+    const label = document.createElement("div");
+    label.className = "empty grow";
+    label.textContent = text;
+    note.appendChild(label);
+    note.appendChild(this._button(action, action, onClick));
+    return note;
+  }
+
+  /* Libelle du tri courant, tel qu'il est ecrit dans le menu de la section
+     "Tri" : le rappel ci-dessus et le resume du panneau doivent nommer le tri
+     de la meme facon que l'utilisateur l'a choisi. */
+  _sortLabel(key) {
+    const wanted = key === undefined ? this._config.sort : key;
+    let label = wanted;
+    this._schemaSort()[0].selector.select.options.forEach(function (option) {
+      if (option.value === wanted) label = option.label;
+    });
+    return label;
   }
 
   /* Champ de recherche, place hors du corps reconstruit a chaque frappe : sinon
@@ -1831,14 +1910,28 @@ class PrixCarburantCardEditor extends HTMLElement {
   }
 
   /* Reordonner fige la liste, comme cocher ou decocher : sans `stations` ecrit
-     en configuration, il n'y a nulle part ou ranger cet ordre. */
+     en configuration, il n'y a nulle part ou ranger cet ordre.
+
+     Ranger cette liste n'a par ailleurs qu'un but : la voir dans le tableau. La
+     premiere fleche bascule donc sur l'ordre personnalise, en annoncant le
+     changement et en gardant le tri precedent sous le coude — un reglage voisin
+     modifie sans le dire serait imprevisible, l'annoncer avec son retour ne
+     l'est pas. Le sens decroissant est remis a plat au passage : garder un
+     `sort_desc` herite d'un autre tri rendrait la liste a l'envers, soit
+     l'inverse de ce qui vient d'etre demande. */
   _moveStation(index, delta, known) {
     const stations = this._effectiveStations(known || []);
     const target = index + delta;
     if (index < 0 || target < 0 || target >= stations.length) return;
     const moved = stations.splice(index, 1)[0];
     stations.splice(target, 0, moved);
-    this._emit({ stations: stations });
+    const patch = { stations: stations };
+    if (this._config.sort !== "manual") {
+      this._previousSort = { sort: this._config.sort, desc: !!this._config.sort_desc };
+      patch.sort = "manual";
+      patch.sort_desc = false;
+    }
+    this._emit(patch);
   }
 
   /* ---------- panneau "noms des stations" ---------- */
@@ -2069,11 +2162,7 @@ class PrixCarburantCardEditor extends HTMLElement {
           : t("sum_all", { count: known.length })
     );
 
-    const sorts = this._schemaSort()[0].selector.select.options;
-    let sortLabel = cfg.sort;
-    sorts.forEach(function (option) {
-      if (option.value === cfg.sort) sortLabel = option.label;
-    });
+    const sortLabel = this._sortLabel();
     this._panelSort._setSummary(
       sortLabel + (cfg.sort_desc ? " ↓" : " ↑") + (cfg.sortable ? "" : t("sum_not_sortable"))
     );

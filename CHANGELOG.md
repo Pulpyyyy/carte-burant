@@ -2,6 +2,14 @@
 
 All notable changes to this project are documented in this file.
 
+## [1.0.4] - 2026-08-01
+
+### Changed
+- **Réordonner les stations bascule sur l'ordre personnalisé** : les flèches ▲ / ▼ rangent la liste, mais le tableau ne la suivait qu'avec le tri « ≡ Ordre personnalisé » — sous tout autre tri, réordonner semblait sans effet. La première flèche bascule désormais d'elle-même, le dit (« Le tableau suit maintenant votre ordre. ») et propose le retour au tri d'avant, nommé. Le sens décroissant est remis à plat au passage : hérité d'un autre tri, il aurait rendu la liste à l'envers, soit l'inverse de ce qui vient d'être demandé — et il est restitué si l'on revient en arrière. Tant que le tri n'est pas l'ordre personnalisé, la section rappelle lequel est en place et offre d'y basculer sans toucher à la liste.
+
+### Fixed
+- **`sort: manual` sans liste `stations` rend l'ordre de l'intégration** au lieu de retomber sur un tri par nom. Toutes les stations étant à égalité de rang, la carte départageait par le nom : un tri que personne n'avait demandé, et qui se lisait comme un tri manuel cassé. L'éditeur fige la liste au moment où cet ordre est choisi, mais rien n'empêche d'écrire `sort: manual` seul en YAML.
+
 ## [1.0.3] - 2026-08-01
 
 ### Fixed
