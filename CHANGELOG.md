@@ -2,6 +2,11 @@
 
 All notable changes to this project are documented in this file.
 
+## [1.0.5] - 2026-08-14
+
+### Added
+- **`map_link` : le nom de la station devient un lien vers une application de cartes** — `google`, `apple` (Plans), `waze`, ou `auto` qui suit l'appareil : sélecteur d'applications sur Android (lien `geo:`, qui respecte l'app carto préférée de l'utilisateur, Waze comprise), Plans sur iPhone / iPad, Google Maps sur PC. Il n'existe pas d'URL unique qui ouvre partout l'application choisie par l'utilisateur — `geo:` ne vit que sur Android, iOS n'ouvre que Plans ou le site du service visé — le mode `auto` fabrique donc le lien par appareil. Sans colonne `name` affichée, le lien se pose sur la première colonne d'identité présente : `city`, puis `address`, puis `brand` — une configuration n'affiche pas toujours le nom des stations. Le lien vise les coordonnées GPS remontées par l'intégration, retombe sur une recherche `adresse + code postal + ville` sans elles, et reste du texte sans l'un ni l'autre. Désactivé par défaut (`none`) : rien ne change sans le demander. Le clic sur le lien n'ouvre pas la fiche de l'entité (`more_info`), et le lien ne transmet pas l'adresse du tableau de bord au service de cartes (`rel="noreferrer"`), comme les logos distants. Réglable dans l'éditeur, section Affichage. Suggéré par Kro sur le forum HACF.
+
 ## [1.0.4] - 2026-08-01
 
 ### Changed

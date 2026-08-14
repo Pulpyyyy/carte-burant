@@ -11,7 +11,7 @@
  * d'analyse et par les navigateurs anciens.
  */
 
-const CARD_VERSION = "1.0.4";
+const CARD_VERSION = "1.0.5";
 
 console.info(
   `%c 🙂 Prix Carburant Card %c v${CARD_VERSION} %c`,
@@ -74,6 +74,7 @@ const FR = {
   err_station_cities: "`station_cities` doit être une table `station_id: ville`",
   err_logos: "`logos` doit être une table `enseigne: fichier`",
   err_decimals: "`decimals` doit être un entier entre 0 et 10",
+  err_map_link: "`map_link` doit être none, auto, google, apple ou waze",
 
   card_name: "Prix Carburant",
   card_description: "Tableau des prix des carburants : choix des stations et des colonnes.",
@@ -91,6 +92,7 @@ const FR = {
   ed_unit: "Unité affichée dans l'en-tête",
   ed_highlight: "Colorer le prix le plus bas / le plus haut",
   ed_more_info: "Clic sur une ligne = fiche de l'entité",
+  ed_map_link: "Ouvrir la station sur une carte",
   ed_logo_path: "Préfixe des logos (ex. /local/images/brands/)",
 
   help_sort:
@@ -100,6 +102,8 @@ const FR = {
   help_unit: "Suffixe ajouté aux en-têtes de carburant. Vide pour aucun.",
   help_decimals: "Décimales des prix. Jusqu'à 10 en YAML.",
   help_more_info: "Ouvre la fiche de la première entité de la station.",
+  help_map_link:
+    "« Auto » suit l'appareil : choix de l'app sur Android, Plans sur iPhone, Google Maps sur PC.",
 
   sec_stations: "Stations",
   sec_stations_hint:
@@ -131,6 +135,11 @@ const FR = {
   opt_updated: "Date de relevé",
   opt_manual: "≡ Ordre personnalisé des stations",
   opt_price: "Prix {fuel}",
+  opt_map_none: "Aucun",
+  opt_map_auto: "Auto — selon l'appareil",
+  opt_map_google: "Google Maps",
+  opt_map_apple: "Plans (Apple)",
+  opt_map_waze: "Waze",
 
   hidden: "Masquées",
   show_column: "Afficher la colonne {label}",
@@ -142,6 +151,7 @@ const FR = {
   lock_column: "Au moins une colonne doit rester affichée",
   lock_station: "Au moins une station doit rester cochée",
   price_of: "prix {fuel}",
+  map_open: "Voir {name} sur la carte",
 
   ed_no_station: "Aucune station remontée par l'intégration.",
   ed_no_brand: "Aucune enseigne remontée par l'intégration.",
@@ -198,6 +208,7 @@ const EN = {
   err_station_cities: "`station_cities` must be a `station_id: city` table",
   err_logos: "`logos` must be a `brand: file` table",
   err_decimals: "`decimals` must be an integer between 0 and 10",
+  err_map_link: "`map_link` must be none, auto, google, apple or waze",
 
   card_name: "Fuel Prices",
   card_description: "Fuel price table: pick your stations and columns.",
@@ -215,6 +226,7 @@ const EN = {
   ed_unit: "Unit shown in the header",
   ed_highlight: "Colour the lowest / highest price",
   ed_more_info: "Clicking a row opens the entity dialog",
+  ed_map_link: "Open the station on a map",
   ed_logo_path: "Logo prefix (e.g. /local/images/brands/)",
 
   help_sort:
@@ -224,6 +236,8 @@ const EN = {
   help_unit: "Suffix added to fuel headers. Empty for none.",
   help_decimals: "Price decimals. Up to 10 in YAML.",
   help_more_info: "Opens the dialog of the station's first entity.",
+  help_map_link:
+    "“Auto” follows the device: app picker on Android, Apple Maps on iPhone, Google Maps on desktop.",
 
   sec_stations: "Stations",
   sec_stations_hint:
@@ -255,6 +269,11 @@ const EN = {
   opt_updated: "Reading date",
   opt_manual: "≡ Custom station order",
   opt_price: "{fuel} price",
+  opt_map_none: "None",
+  opt_map_auto: "Auto — per device",
+  opt_map_google: "Google Maps",
+  opt_map_apple: "Apple Maps",
+  opt_map_waze: "Waze",
 
   hidden: "Hidden",
   show_column: "Show the {label} column",
@@ -266,6 +285,7 @@ const EN = {
   lock_column: "At least one column must stay visible",
   lock_station: "At least one station must stay ticked",
   price_of: "{fuel} price",
+  map_open: "Show {name} on a map",
 
   ed_no_station: "No station reported by the integration.",
   ed_no_brand: "No brand reported by the integration.",
@@ -358,6 +378,7 @@ const DEFAULTS = {
   sort_desc: false,
   sortable: true,
   more_info: true,
+  map_link: "none",
   background: null,
   color_min: "#4caa40",
   color_max: "#e05252"
@@ -380,6 +401,12 @@ const STYLE = [
   "tbody tr:hover td { background: var(--prix-carburant-hover, rgba(127,127,127,0.22)); }",
   "tbody tr.clickable { cursor: pointer; }",
   "td.col-name { white-space: normal; overflow-wrap: break-word; }",
+  /* Lien carte : la couleur du texte, un souligne pointille pour le signaler.
+     Proprietes separees plutot que le raccourci `underline dotted` : un
+     navigateur qui ignore le style du trait garde au moins le soulignement. */
+  "td a.maplink { color: inherit; text-decoration-line: underline;",
+  "  text-decoration-style: dotted; text-underline-offset: 2px; }",
+  "td a.maplink:hover, td a.maplink:focus-visible { color: var(--primary-color); }",
   "img.logo { height: var(--prix-carburant-logo-size, 24px); width: auto; max-width: 80px;",
   "           object-fit: contain; vertical-align: middle; display: block; margin: 0 auto; }",
   ".min { color: var(--prix-carburant-color-min, #4caa40); font-weight: 700; }",
@@ -509,6 +536,59 @@ const stationLabel = function (attrs, sid) {
   if (name && name.toLowerCase() !== "undefined") return name;
   const brand = attrs && attrs.brand ? String(attrs.brand) + " " : "";
   return brand + sid;
+};
+
+/* ---------- lien vers une application de cartes ----------
+
+   Il n'existe pas d'URL qui ouvre partout l'application de cartes choisie par
+   l'utilisateur : `geo:` declenche le selecteur d'applications, mais seulement
+   sur Android ; iOS n'ouvre que Plans ou le site du service vise ; un PC n'a
+   pas d'application carto. Le mode "auto" fabrique donc le lien par appareil,
+   et les modes fixes imposent le meme service partout. */
+const MAP_LINK_MODES = ["none", "auto", "google", "apple", "waze"];
+
+/* Les iPad recents s'annoncent comme des Mac : l'ecran tactile les trahit. */
+const deviceMapTarget = function () {
+  const ua = navigator.userAgent || "";
+  if (/android/i.test(ua)) return "android";
+  if (/iphone|ipad|ipod/i.test(ua)) return "apple";
+  if (/macintosh/i.test(ua) && navigator.maxTouchPoints > 1) return "apple";
+  return "google";
+};
+
+/* URL du lien pour une station : coordonnees de l'integration en priorite,
+   sinon recherche sur l'adresse postale ; sans l'un ni l'autre, pas de lien. */
+const mapLinkUrl = function (mode, attrs, name) {
+  if (!mode || mode === "none") return "";
+  const target = mode === "auto" ? deviceMapTarget() : mode;
+  const lat = toNumber(attrs ? attrs.latitude : null, null);
+  const lon = toNumber(attrs ? attrs.longitude : null, null);
+  const coords = lat !== null && lon !== null ? lat + "," + lon : "";
+  const address = [attrs ? attrs.address : "", attrs ? attrs.postal_code : "", attrs ? attrs.city : ""]
+    .map(function (part) {
+      return part === undefined || part === null ? "" : String(part).trim();
+    })
+    .filter(Boolean)
+    .join(" ");
+  if (!coords && !address) return "";
+  switch (target) {
+    /* `geo:` n'est emis que par la branche Android du mode "auto" : c'est le
+       seul systeme qui le route vers l'application preferee de l'utilisateur. */
+    case "android":
+      return coords
+        ? "geo:" + coords + "?q=" + coords + "(" + encodeURIComponent(name) + ")"
+        : "geo:0,0?q=" + encodeURIComponent(address);
+    case "apple":
+      return coords
+        ? "https://maps.apple.com/?ll=" + coords + "&q=" + encodeURIComponent(name)
+        : "https://maps.apple.com/?q=" + encodeURIComponent(address);
+    case "waze":
+      return coords
+        ? "https://www.waze.com/ul?ll=" + coords + "&zoom=17"
+        : "https://www.waze.com/ul?q=" + encodeURIComponent(address);
+    default:
+      return "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(coords || address);
+  }
 };
 
 /* Cle de colonne : accepte la forme courte ("E10") comme la forme longue
@@ -664,6 +744,10 @@ class PrixCarburantCard extends HTMLElement {
       throw new Error(t("err_decimals"));
     }
     cfg.decimals = decimals;
+    cfg.map_link = String(cfg.map_link || DEFAULTS.map_link).toLowerCase();
+    if (MAP_LINK_MODES.indexOf(cfg.map_link) === -1) {
+      throw new Error(t("err_map_link"));
+    }
     if (!cfg.columns || cfg.columns.length === 0) cfg.columns = DEFAULT_COLUMNS.slice();
     cfg.stations = cfg.stations.map(String);
     cfg.station_names = stringKeys(cfg.station_names);
@@ -1091,10 +1175,11 @@ class PrixCarburantCard extends HTMLElement {
     table.appendChild(thead);
 
     const tbody = document.createElement("tbody");
+    const linkKey = this._mapLinkColumn(columns);
     rows.forEach(function (row) {
       const tr = document.createElement("tr");
       columns.forEach(function (c) {
-        tr.appendChild(self._cell(c, row, levels));
+        tr.appendChild(self._cell(c, row, levels, linkKey));
       });
       if (cfg.more_info && row.ids.length) {
         tr.classList.add("clickable");
@@ -1108,7 +1193,53 @@ class PrixCarburantCard extends HTMLElement {
     wrap.appendChild(table);
   }
 
-  _cell(column, row, levels) {
+  /* Colonne qui porte le lien carte quand `map_link` est actif : `name` en
+     priorite, sinon la premiere colonne d'identite affichee — rien n'oblige
+     une configuration a afficher le nom des stations. */
+  _mapLinkColumn(columns) {
+    if (this._config.map_link === "none") return "";
+    const keys = columns.map(function (c) {
+      return c.key;
+    });
+    const candidates = ["name", "city", "address", "brand"];
+    for (let i = 0; i < candidates.length; i++) {
+      if (keys.indexOf(candidates[i]) !== -1) return candidates[i];
+    }
+    return "";
+  }
+
+  /* Remplit une cellule d'identite : lien carte quand la colonne le porte et
+     que la station est localisable, texte simple sinon. Le tiret des valeurs
+     absentes n'est jamais un lien. */
+  _fillIdentity(td, text, row, carriesLink) {
+    const url =
+      carriesLink && text !== "-"
+        ? mapLinkUrl(this._config.map_link, row.attrs, this._stationName(row))
+        : "";
+    if (!url) {
+      td.textContent = text;
+      return;
+    }
+    const link = document.createElement("a");
+    link.className = "maplink";
+    link.href = url;
+    link.target = "_blank";
+    /* Comme pour les logos distants : le service de cartes n'a pas a
+       connaitre l'adresse du tableau de bord. */
+    link.rel = "noopener noreferrer";
+    link.textContent = text;
+    /* Le nom de la station dans l'infobulle : le lien peut etre porte par la
+       ville ou l'enseigne, l'infobulle dit alors ce qui s'ouvre. */
+    link.title = t("map_open", { name: this._stationName(row) });
+    /* Sans quoi le clic remonterait a la ligne et ouvrirait en meme temps la
+       fiche de l'entite (`more_info`). */
+    link.addEventListener("click", function (ev) {
+      ev.stopPropagation();
+    });
+    td.appendChild(link);
+  }
+
+  _cell(column, row, levels, linkKey) {
     const cfg = this._config;
     const attrs = row.attrs;
     const td = document.createElement("td");
@@ -1157,11 +1288,11 @@ class PrixCarburantCard extends HTMLElement {
         break;
       }
       case "name": {
-        td.textContent = this._stationName(row);
+        this._fillIdentity(td, this._stationName(row), row, column.key === linkKey);
         break;
       }
       case "city": {
-        td.textContent = this._stationCity(row) || "-";
+        this._fillIdentity(td, this._stationCity(row) || "-", row, column.key === linkKey);
         break;
       }
       case "distance": {
@@ -1185,7 +1316,10 @@ class PrixCarburantCard extends HTMLElement {
       }
       default: {
         const value = attrs[column.key];
-        td.textContent = value === undefined || value === null || value === "" ? "-" : String(value);
+        const text = value === undefined || value === null || value === "" ? "-" : String(value);
+        /* `address` et `brand` peuvent porter le lien carte ; pour toute autre
+           colonne, `linkKey` ne correspond jamais et le texte reste simple. */
+        this._fillIdentity(td, text, row, column.key === linkKey);
       }
     }
     return td;
@@ -1196,7 +1330,7 @@ class PrixCarburantCard extends HTMLElement {
 
 /* Champs de l'editeur ayant un texte d'aide sous le libelle. On n'en met que la
    ou le libelle ne suffit pas : une aide sous chaque champ ne se lit plus. */
-const EDITOR_HELPED = ["sort", "sortable", "unit", "decimals", "more_info"];
+const EDITOR_HELPED = ["sort", "sortable", "unit", "decimals", "more_info", "map_link"];
 
 const EDITOR_STYLE = [
   ":host { display: block; }",
@@ -1338,6 +1472,7 @@ class PrixCarburantCardEditor extends HTMLElement {
     });
     if (!next.title) delete next.title;
     if (!next.logo_path) delete next.logo_path;
+    if (next.map_link === "none") delete next.map_link;
     this._config = Object.assign({}, DEFAULTS, next);
     fireEvent(this, "config-changed", { config: next });
   }
@@ -1399,13 +1534,17 @@ class PrixCarburantCardEditor extends HTMLElement {
   }
 
   _schemaDisplay() {
+    const maps = MAP_LINK_MODES.map(function (key) {
+      return { value: key, label: t("opt_map_" + key) };
+    });
     return [
       { name: "title", selector: { text: {} } },
       { name: "show_title", selector: { boolean: {} } },
       { name: "unit", selector: { text: {} } },
       { name: "decimals", selector: { number: { min: 0, max: 3, mode: "box" } } },
       { name: "highlight", selector: { boolean: {} } },
-      { name: "more_info", selector: { boolean: {} } }
+      { name: "more_info", selector: { boolean: {} } },
+      { name: "map_link", selector: { select: { mode: "dropdown", options: maps } } }
     ];
   }
 

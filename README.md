@@ -103,6 +103,7 @@ color_max: "#e05252"
 
 # ---- Interaction et fond ---------------------------------------------------
 more_info: true               # clic sur une ligne = fiche de la 1re entité de la station
+map_link: none                # none | auto | google | apple | waze — lien vers la station sur une carte
 background: rgba(25,25,25,0.6)   # fond de la ha-card ; omis = fond du thème
 
 # ---- Surcharges de libellés ------------------------------------------------
@@ -143,6 +144,7 @@ logos:
 | `color_min` | string | `#4caa40` | Couleur du prix le plus bas. |
 | `color_max` | string | `#e05252` | Couleur du prix le plus haut. |
 | `more_info` | bool | `true` | Clic sur une ligne → fiche de l'entité. |
+| `map_link` | string | `none` | Lien vers la station sur une carte : `auto`, `google`, `apple`, `waze` (voir *Lien carte*). |
 | `logos` | map | `{}` | `enseigne: fichier` ou `station_id: fichier`. |
 | `logo_path` | string | `""` | Préfixe ajouté devant les valeurs **relatives** de `logos`. |
 | `background` | string | — | Fond de la `ha-card`, n'importe quelle valeur CSS. |
@@ -249,6 +251,33 @@ serait à la fois la moins chère et la plus chère.
 Les **ex æquo sont tous colorés** : trois stations au même prix plancher sont trois fois
 la bonne affaire. `highlight: false` désactive complètement la coloration.
 
+## Lien carte
+
+Avec `map_link`, le nom de la station devient un lien qui ouvre sa localisation dans une
+application de cartes — pour y jeter un œil ou lancer un itinéraire. Désactivé par défaut
+(`none`), le clic sur la ligne reste alors seul en jeu.
+
+Sans colonne `name` affichée, le lien se pose sur la première colonne d'identité présente :
+`city`, puis `address`, puis `brand`. Il est signalé par un soulignement en pointillés, et
+son infobulle nomme toujours la station qui va s'ouvrir. Un tiret (valeur absente) n'est
+jamais un lien.
+
+| Valeur | Comportement |
+|---|---|
+| `auto` | Suit l'appareil : sélecteur d'applications sur Android (lien `geo:`, qui respecte l'app carto préférée — Waze comprise), Plans sur iPhone / iPad, Google Maps sur PC. |
+| `google` | Google Maps partout : l'app sur mobile, le site sur PC. |
+| `apple` | Plans sur iPhone / iPad, la version web de Plans ailleurs. |
+| `waze` | L'app Waze sur mobile, la carte live Waze sur PC. |
+
+Il n'existe pas d'URL unique qui ouvre partout l'application choisie par l'utilisateur :
+`geo:` ne vit que sur Android, et iOS n'ouvre que Plans ou le site du service visé. Le
+mode `auto` est la meilleure approximation — un lien fabriqué par appareil.
+
+Le lien vise les coordonnées GPS remontées par l'intégration ; sans elles, il retombe sur
+une recherche `adresse + code postal + ville`. Sans l'un ni l'autre, le nom reste du texte.
+Le clic sur le lien n'ouvre **pas** la fiche de l'entité (`more_info`), et le lien ne
+transmet pas l'adresse du tableau de bord au service de cartes (`rel="noreferrer"`).
+
 ## Noms et villes
 
 ```yaml
@@ -287,7 +316,7 @@ Six sections repliables, dans l'ordre des décisions :
 | **Stations** | Une case par station, ▲ / ▼ pour ordonner. Filtre au-delà de 8 stations ; les flèches sont neutralisées tant qu'un filtre est actif, l'ordre n'ayant pas de sens sur une liste partielle. |
 | **Tri** | `sort`, `sort_desc`, `sortable`. « ≡ Ordre personnalisé des stations » est en tête de liste, séparé des tris portant sur une donnée. |
 | **Colonnes** | Interrupteur par colonne, ▲ / ▼ pour ordonner. |
-| **Affichage** | `title`, `show_title`, `unit`, `decimals` (0 à 3 dans l'éditeur, jusqu'à 10 en YAML), `highlight`, `more_info`. |
+| **Affichage** | `title`, `show_title`, `unit`, `decimals` (0 à 3 dans l'éditeur, jusqu'à 10 en YAML), `highlight`, `more_info`, `map_link`. |
 | **Noms et villes** | Un champ nom et un champ ville par station affichée, plus les surcharges devenues orphelines. |
 | **Logos des enseignes** | Préfixe, puis un champ et un aperçu par enseigne détectée. |
 
