@@ -16,6 +16,7 @@ une colonne par carburant.
   remonte réellement.
 - Sélecteur de carte **« par entité »** de HA 2026.6+ : cliquer sur un sensor de
   l'intégration propose deux mises en page prêtes à l'emploi.
+- La carte peut rechercher et afficher les stations situées autour de l'utilisateur dans un rayon défini.
 - **Français et anglais**, carte et éditeur, suivant la langue de Home Assistant.
 
 Version de la carte : **1.0.4** · Home Assistant **2024.4+** (le sélecteur par entité
@@ -101,6 +102,17 @@ highlight: true               # coloration du prix mini / maxi
 color_min: "#4caa40"
 color_max: "#e05252"
 
+# ---- Barre de recherche des stations à proximité ----------------------------
+search:                      # activer la barre de recherche
+  fuels:                     # liste des carburants à inclure dans la recherche
+    - E10
+    - SP95
+    - SP98
+    - Gazole
+    - E85
+    - GPLc
+  default_radius: 5          # radius de recherche par défaut
+
 # ---- Interaction et fond ---------------------------------------------------
 more_info: true               # clic sur une ligne = fiche de la 1re entité de la station
 map_link: none                # none | auto | google | apple | waze — lien vers la station sur une carte
@@ -143,6 +155,9 @@ logos:
 | `highlight` | bool | `true` | Coloration mini / maxi. |
 | `color_min` | string | `#4caa40` | Couleur du prix le plus bas. |
 | `color_max` | string | `#e05252` | Couleur du prix le plus haut. |
+| `search` | object | `-` | Active la recherche de stations à proximité. Si absent, la carte fonctionne en mode catalogue classique. |
+| `search.fuels` | liste | `[E10, SP95, SP98, Gazole]` | Carburants inclus dans la recherche. Valeurs possibles : E10, SP95, SP98, Gazole, E85, GPLc. |
+| `search.default_radius` | number | `5` | Rayon de recherche initial en kilomètres. Le rayon peut ensuite être ajusté avec les boutons + et - de la carte. |
 | `more_info` | bool | `true` | Clic sur une ligne → fiche de l'entité. |
 | `map_link` | string | `none` | Lien vers la station sur une carte : `auto`, `google`, `apple`, `waze` (voir *Lien carte*). |
 | `logos` | map | `{}` | `enseigne: fichier` ou `station_id: fichier`. |
