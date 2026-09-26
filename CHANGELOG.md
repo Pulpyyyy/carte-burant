@@ -2,6 +2,11 @@
 
 All notable changes to this project are documented in this file.
 
+## [1.0.6] - 2026-09-26
+
+### Added
+- **Recherche à proximité (`search`)** : une barre au-dessus du tableau cherche les stations les moins chères autour de soi, via le service `prix_carburant.find_nearest_stations` de l'intégration : un appel par carburant coché, chacun renvoyant au plus les 10 stations les moins chères du rayon. Carburants à cocher sur la carte (pastilles) et rayon réglable de 1 à 30 km par − / + : rien n'est lancé sans un clic sur 🔍, qui s'allume quand les réglages ont changé depuis la dernière recherche. Décocher un carburant le retire aussitôt des résultats, sans nouvel appel. Les pastilles proposent les carburants que remontent les sensors de l'intégration, tous cochés au départ ; le choix est enregistré dans Home Assistant et lié au compte utilisateur connecté (`frontend/set_user_data`), donc le même sur tous ses appareils et après rechargement, et un carburant apparu plus tard est coché d'office. Les résultats remplacent les stations suivies jusqu'au clic sur ✕ ; les colonnes sans donnée pour eux (logo, enseigne, date, identifiant) et les carburants non cochés sont masqués, les carburants cochés ajoutés, et un tri sans objet (ordre personnalisé, date…) cède la place à la distance. La distance suit la position courante ; les prix, eux, datent de la recherche, dont l'heure est affichée. Le centre est `search.entity`, sinon la personne de l'utilisateur connecté si elle est localisée, sinon `zone.home` : une tablette murale sans personne cherche donc autour de la maison. Un carburant en erreur est signalé sans masquer les autres, et 🔍 propose de le redemander ; une panne complète affiche le message de Home Assistant et garde les stations suivies. Rayon et résultats survivent à un changement de vue et sont partagés par les cartes réglées à l'identique. Désactivé par défaut ; réglable dans l'éditeur, dans une septième section « Recherche à proximité » dont le résumé donne le rayon de départ. Contribution de KroFR.
+
 ## [1.0.5] - 2026-08-14
 
 ### Added

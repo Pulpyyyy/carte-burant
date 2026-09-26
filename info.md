@@ -9,7 +9,8 @@ Tableau des prix des carburants pour Home Assistant, à partir de l'intégration
 - 🏷️ Noms et villes surchargeables, logos par enseigne ou par station
 - 🟢 Prix le plus bas en vert, le plus haut en rouge, ex æquo compris
 - 🗺️ Lien carte optionnel sur le nom de la station : Google Maps, Plans, Waze, ou auto selon l'appareil
-- ✏️ Éditeur graphique en six sections repliables
+- 📍 Recherche optionnelle des stations les moins chères autour de toi
+- ✏️ Éditeur graphique en sept sections repliables
 - 📱 Sélecteur de carte « par entité » de HA 2026.6+
 
 **Contenu :**

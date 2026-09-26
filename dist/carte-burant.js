@@ -61,7 +61,7 @@ const FR = {
 
   no_station: "Aucune station : vérifie l'intégration Prix Carburant.",
   no_wanted_station: "Aucune des stations demandées n'est remontée par l'intégration.",
-  no_search: "Aucun résultat : lance une recherche ou élargis le rayon.",
+  no_search: "Aucune station dans ce rayon : élargis-le et relance la recherche.",
   sort_by: "Trier par {label}",
   sort_back_to: "Revenir au tri configuré : {label}",
   sort_manual_header: "Ordre personnalisé des stations · cliquer pour trier par nom",
@@ -76,18 +76,29 @@ const FR = {
   err_logos: "`logos` doit être une table `enseigne: fichier`",
   err_decimals: "`decimals` doit être un entier entre 0 et 10",
   err_map_link: "`map_link` doit être none, auto, google, apple ou waze",
-  err_search: "`search` doit être un objet",
+  err_search: "`search` doit être un objet, `true` ou `false`",
   search_title: "Stations à proximité",
-  search_radius: "Rayon actuel : {radius} km",
+  search_origin: "Autour de {name} · {radius} km",
+  search_no_origin: "Aucune position connue : renseigne `search.entity`",
   search_decrease: "Réduire le rayon de recherche",
   search_increase: "Augmenter le rayon de recherche",
   search_run: "Lancer la recherche à proximité",
-  search_reset: "Effacer les résultats de recherche",
-  search_count_one: "⛽ {count} station trouvée dans un rayon de {radius} km",
-  search_count_other: "⛽ {count} stations trouvées dans un rayon de {radius} km",
-  ed_search_enable: "Activer la recherche à proximité",
-  ed_search_fuels: "Carburants à rechercher",
+  search_apply: "Relancer la recherche avec ces carburants et ce rayon",
+  search_rerun: "Relance la recherche pour afficher les carburants cochés.",
+  search_fuel_on: "Ne plus rechercher {fuel}",
+  search_fuel_off: "Rechercher {fuel}",
+  search_running: "Recherche en cours…",
+  search_reset: "Effacer les résultats et revenir aux stations suivies",
+  search_count_one: "{count} station dans un rayon de {radius} km · {time}",
+  search_count_other: "{count} stations dans un rayon de {radius} km · {time}",
+  search_partial: " · sans {fuels} (erreur)",
+  search_failed: "Recherche impossible : {message}",
+  ed_search_enable: "Barre de recherche",
+  ed_search_enable_sub: "Au-dessus du tableau",
   ed_search_default_radius: "Rayon de recherche par défaut",
+  ed_search_entity: "Position de référence",
+  help_search_entity:
+    "Vide : la personne liée à l'utilisateur connecté, sinon le domicile (zone.home). À renseigner pour une tablette murale.",
 
   card_name: "Prix Carburant",
   card_description: "Tableau des prix des carburants : choix des stations et des colonnes.",
@@ -137,6 +148,9 @@ const FR = {
   sec_names_hint: "Laisser vide pour garder la valeur fournie par l'intégration.",
   sec_logos: "Logos des enseignes",
   sec_logos_hint: "Fichier relatif au préfixe ci-dessous, ou URL / chemin absolu.",
+  sec_search: "Recherche à proximité",
+  sec_search_hint:
+    "Les stations les moins chères autour de toi, via le service de l'intégration. Lancée d'un clic sur la carte.",
 
   opt_distance: "Distance",
   opt_name: "Nom",
@@ -185,6 +199,8 @@ const FR = {
   sum_not_sortable: " · en-têtes non cliquables",
   sum_no_title: "sans titre",
   sum_decimals: "{count} décimales",
+  sum_search_off: "désactivée",
+  sum_search_on: "rayon de {radius} km",
   sum_no_override: "aucune surcharge",
   sum_override: "{count} surcharge",
   sum_overrides: "{count} surcharges",
@@ -209,7 +225,7 @@ const EN = {
 
   no_station: "No station: check the Prix Carburant integration.",
   no_wanted_station: "None of the requested stations is reported by the integration.",
-  no_search: "No results: run a search or widen the radius.",
+  no_search: "No station within this radius: widen it and search again.",
   sort_by: "Sort by {label}",
   sort_back_to: "Back to the configured sort: {label}",
   sort_manual_header: "Custom station order · click to sort by name",
@@ -224,18 +240,29 @@ const EN = {
   err_logos: "`logos` must be a `brand: file` table",
   err_decimals: "`decimals` must be an integer between 0 and 10",
   err_map_link: "`map_link` must be none, auto, google, apple or waze",
-  err_search: "`search` must be an object",
+  err_search: "`search` must be an object, `true` or `false`",
   search_title: "Nearby stations",
-  search_radius: "Current radius: {radius} km",
+  search_origin: "Around {name} · {radius} km",
+  search_no_origin: "No known position: set `search.entity`",
   search_decrease: "Reduce the search radius",
   search_increase: "Increase the search radius",
   search_run: "Run the nearby search",
-  search_reset: "Clear the search results",
-  search_count_one: "⛽ {count} station found within {radius} km",
-  search_count_other: "⛽ {count} stations found within {radius} km",
-  ed_search_enable: "Enable nearby search",
-  ed_search_fuels: "Fuels to search",
+  search_apply: "Search again with these fuels and this radius",
+  search_rerun: "Search again to show the selected fuels.",
+  search_fuel_on: "Stop searching {fuel}",
+  search_fuel_off: "Search {fuel}",
+  search_running: "Searching…",
+  search_reset: "Clear the results and go back to the tracked stations",
+  search_count_one: "{count} station within {radius} km · {time}",
+  search_count_other: "{count} stations within {radius} km · {time}",
+  search_partial: " · without {fuels} (error)",
+  search_failed: "Search failed: {message}",
+  ed_search_enable: "Search bar",
+  ed_search_enable_sub: "Above the table",
   ed_search_default_radius: "Default search radius",
+  ed_search_entity: "Reference position",
+  help_search_entity:
+    "Empty: the person linked to the logged-in user, otherwise home (zone.home). Set it for a wall tablet.",
 
   card_name: "Fuel Prices",
   card_description: "Fuel price table: pick your stations and columns.",
@@ -285,6 +312,8 @@ const EN = {
   sec_names_hint: "Leave empty to keep the value reported by the integration.",
   sec_logos: "Brand logos",
   sec_logos_hint: "File relative to the prefix below, or URL / absolute path.",
+  sec_search: "Nearby search",
+  sec_search_hint: "The cheapest stations around you, through the integration's service. Run with a click on the card.",
 
   opt_distance: "Distance",
   opt_name: "Name",
@@ -333,6 +362,8 @@ const EN = {
   sum_not_sortable: " · headers not clickable",
   sum_no_title: "no title",
   sum_decimals: "{count} decimals",
+  sum_search_off: "off",
+  sum_search_on: "{radius} km radius",
   sum_no_override: "no override",
   sum_override: "{count} override",
   sum_overrides: "{count} overrides",
@@ -370,7 +401,7 @@ const t = function (key, vars) {
    l'integration (E10, SP95, SP98, GPLc, Gazole, E85...). */
 const META = {
   logo: { align: "center", width: "40px", sortable: false },
-  name: { align: "left" },
+  name: { align: "left", width: "34%" },
   brand: { align: "left" },
   address: { align: "left" },
   city: { align: "left" },
@@ -413,76 +444,261 @@ const DEFAULTS = {
   search: null
 };
 
-/* Carburants interroges directement via le service de l'integration "Prix Carburant" (`prix_carburant.find_nearest_stations`) */
+/* ---------- recherche a proximite ----------
+
+   La carte interroge le service `prix_carburant.find_nearest_stations` de
+   l'integration. Le service ne connait qu'un carburant par appel, et chaque
+   appel part vers l'API publique des prix, qui renvoie au plus les 10 stations
+   les moins cheres du rayon. Rien n'est donc lance sans un clic : ni au
+   chargement, ni quand la position change. */
+const SEARCH_FUEL_CODES = ["E10", "SP95", "SP98", "Gazole", "E85", "GPLc"];
+
 const SEARCH_DEFAULTS = {
-  fuels: ["E10", "SP95", "SP98", "Gazole"],
   default_radius: 5
 };
 
-const SEARCH_FUEL_CODES = ["E10", "SP95", "SP98", "Gazole", "E85", "GPLc"];
-const ANONYMOUS_KEY = "__anonymous__";
-const RADIUS_MEMORY = new Map();
+/* Bornes du selecteur de l'integration. Au-dela, l'API ne rendrait de toute
+   facon que les 10 stations les moins cheres, de plus en plus lointaines. */
+const SEARCH_RADIUS_MIN = 1;
+const SEARCH_RADIUS_MAX = 30;
 
-const currentRadius = function (search, trackerId) {
-  const key = trackerId || ANONYMOUS_KEY;
-  if (RADIUS_MEMORY.has(key)) return RADIUS_MEMORY.get(key);
-  const initial = Math.round(toNumber(search ? search.default_radius : 5, 5));
-  RADIUS_MEMORY.set(key, initial);
-  return initial;
+const clampRadius = function (value) {
+  const n = Math.round(toNumber(value, SEARCH_DEFAULTS.default_radius));
+  return Math.min(SEARCH_RADIUS_MAX, Math.max(SEARCH_RADIUS_MIN, n));
 };
 
-const setCurrentRadius = function (trackerId, value) {
-  RADIUS_MEMORY.set(trackerId || ANONYMOUS_KEY, Math.max(1, Math.round(value)));
-};
-
-const SEARCH_RESULTS_MEMORY = new Map();
-const SEARCH_PENDING = new Set();
-const SEARCH_FUEL_KEYS = {
-  e10: "E10",
-  sp95: "SP95",
-  sp98: "SP98",
-  gazole: "Gazole",
-  e85: "E85",
-  gpl: "GPLc"
-};
-
-const rawFuelKeyFor = function (fuelCode) {
-  const entry = Object.keys(SEARCH_FUEL_KEYS).filter(function (raw) {
-    return SEARCH_FUEL_KEYS[raw] === fuelCode;
-  })[0];
-  return entry || String(fuelCode || "").toLowerCase();
-};
-
-/* Fusionne les listes de stations renvoyees separement pour chaque carburant
-   (une station par carburant ou elle est disponible) en une seule liste, une
-   entree par station physique, avec un prix par carburant trouve.
-   Deux stations sont la meme station quand leur nom ET leur adresse coincident. */
-const mergeStationsByFuel = function (perFuelResults) {
-  const merged = [];
-  const findExisting = function (station) {
-    for (let i = 0; i < merged.length; i++) {
-      if (merged[i].name === station.name && merged[i].address === station.address) return merged[i];
-    }
+/* `search` accepte un objet, `true` (reglages par defaut) ou `false` / absent
+   (desactive). En mode strict (la carte), une valeur mal formee leve une
+   erreur explicite, comme les autres options ; l'editeur se contente de la
+   corriger pour rester utilisable. Les carburants ne se configurent pas : ils
+   se cochent sur la carte (voir `SEARCH_PREFS`). */
+const normalizeSearch = function (value, strict) {
+  if (value === undefined || value === null || value === false) return null;
+  if (value === true) value = {};
+  if (!isPlainObject(value)) {
+    if (strict) throw new Error(t("err_search"));
     return null;
-  };
-  perFuelResults.forEach(function (entry) {
-    const rawKey = rawFuelKeyFor(entry.fuel);
-    (entry.stations || []).forEach(function (station) {
-      if (!station) return;
-      let existing = findExisting(station);
-      if (!existing) {
-        existing = {
-          name: station.name,
-          address: station.address,
-          latitude: station.latitude,
-          longitude: station.longitude
-        };
-        merged.push(existing);
+  }
+  const out = Object.assign({}, value, { default_radius: clampRadius(value.default_radius) });
+  /* Plus lue : l'editeur ne doit pas la recopier dans le YAML. */
+  delete out.fuels;
+  if (out.entity) out.entity = String(out.entity);
+  else delete out.entity;
+  return out;
+};
+
+/* Carburants proposes : ceux que remontent les sensors de l'integration,
+   parmi ceux que le service sait chercher. Sans sensor, les six. */
+const searchableFuels = function (hass) {
+  const known = PrixCarburantCard.discoverFuels(hass);
+  const list = SEARCH_FUEL_CODES.filter(function (code) {
+    return known.indexOf(code) !== -1;
+  });
+  return list.length ? list : SEARCH_FUEL_CODES.slice();
+};
+
+/* Carburants decoches par l'utilisateur, enregistres dans les donnees
+   utilisateur de Home Assistant (`frontend/set_user_data`) : cote serveur, par
+   compte, donc les memes sur tous ses appareils et apres rechargement. On
+   garde les decoches plutot que les coches : un carburant qui apparait plus
+   tard dans l'integration est ainsi coche d'office, comme tous au depart. */
+const USER_DATA_KEY = "prix-carburant-card";
+const SEARCH_PREFS = { off: [], stored: {}, state: "idle", touched: false, timer: null };
+
+/* Lecture unique par page. Un choix fait avant la reponse l'emporte sur elle ;
+   sans reponse (droits, version), la carte garde le choix en memoire. */
+const loadSearchPrefs = function (hass) {
+  if (SEARCH_PREFS.state !== "idle" || !hass || typeof hass.callWS !== "function") return;
+  SEARCH_PREFS.state = "loading";
+  hass
+    .callWS({ type: "frontend/get_user_data", key: USER_DATA_KEY })
+    .then(
+      function (res) {
+        const value = res && isPlainObject(res.value) ? res.value : {};
+        SEARCH_PREFS.stored = value;
+        if (!SEARCH_PREFS.touched && Array.isArray(value.search_off)) {
+          SEARCH_PREFS.off = value.search_off.filter(function (fuel) {
+            return SEARCH_FUEL_CODES.indexOf(fuel) !== -1;
+          });
+        }
+      },
+      function () {}
+    )
+    .then(function () {
+      SEARCH_PREFS.state = "ready";
+      refreshSearchCards();
+    });
+};
+
+/* Ecriture regroupee : plusieurs clics rapides ne font qu'un enregistrement.
+   Les autres clefs eventuelles de l'entree sont conservees. */
+const saveSearchPrefs = function (hass) {
+  SEARCH_PREFS.touched = true;
+  clearTimeout(SEARCH_PREFS.timer);
+  SEARCH_PREFS.timer = setTimeout(function () {
+    if (!hass || typeof hass.callWS !== "function") return;
+    const value = Object.assign({}, SEARCH_PREFS.stored, { search_off: SEARCH_PREFS.off.slice() });
+    SEARCH_PREFS.stored = value;
+    hass.callWS({ type: "frontend/set_user_data", key: USER_DATA_KEY, value: value }).catch(function () {});
+  }, 500);
+};
+
+/* Carburants coches parmi ceux proposes. Tout decocher est impossible depuis
+   la carte ; une preference venue d'ailleurs qui viderait la liste retombe
+   sur tous. */
+const selectedFuels = function (available) {
+  const on = available.filter(function (fuel) {
+    return SEARCH_PREFS.off.indexOf(fuel) === -1;
+  });
+  return on.length ? on : available.slice();
+};
+
+const hasPosition = function (state) {
+  return (
+    !!state &&
+    !!state.attributes &&
+    toNumber(state.attributes.latitude, null) !== null &&
+    toNumber(state.attributes.longitude, null) !== null
+  );
+};
+
+/* Centre de la recherche : l'entite de la configuration, sinon la personne
+   liee a l'utilisateur connecte si elle est localisee, sinon le domicile.
+   `zone.home` existe dans toute installation : une tablette murale, connectee
+   sous un compte sans personne, cherche autour de la maison plutot que de ne
+   rien pouvoir faire. `watch` liste les entites dont un changement peut
+   deplacer ce centre, pour que la carte les surveille. */
+const searchOrigin = function (hass, search) {
+  const states = hass && hass.states ? hass.states : {};
+  if (search.entity) {
+    return { id: search.entity, located: hasPosition(states[search.entity]), watch: [search.entity] };
+  }
+  const userId = hass && hass.user ? hass.user.id : "";
+  let person = "";
+  if (userId) {
+    for (const id in states) {
+      if (!Object.prototype.hasOwnProperty.call(states, id)) continue;
+      if (id.slice(0, 7) !== "person.") continue;
+      const attrs = states[id].attributes;
+      if (attrs && attrs.user_id === userId) {
+        person = id;
+        break;
       }
-      existing[rawKey] = station.price;
+    }
+  }
+  const watch = person ? [person, "zone.home"] : ["zone.home"];
+  if (person && hasPosition(states[person])) return { id: person, located: true, watch: watch };
+  if (hasPosition(states["zone.home"])) return { id: "zone.home", located: true, watch: watch };
+  return { id: person, located: false, watch: watch };
+};
+
+/* Etat des recherches, au niveau du module : il est partage par les cartes de
+   la page et survit quand Home Assistant recree une carte (changement de vue,
+   edition du tableau de bord). Une page n'a qu'un utilisateur connecte : la
+   clef tient donc a la configuration seule : entite de reference et rayon de
+   depart. Deux cartes reglees differemment ne melangent pas leurs resultats,
+   et changer le rayon de depart dans l'editeur repart de la nouvelle valeur.
+   `radius` est celui de la prochaine recherche, modifiable sur la carte ; le
+   resultat garde carburants et rayon avec lesquels il a ete obtenu. */
+const SEARCHES = new Map();
+
+const searchEntry = function (search) {
+  const key = (search.entity || "") + "|" + search.default_radius;
+  let entry = SEARCHES.get(key);
+  if (!entry) {
+    entry = {
+      key: key,
+      radius: search.default_radius,
+      pending: false,
+      result: null,
+      generation: 0
+    };
+    SEARCHES.set(key, entry);
+  }
+  return entry;
+};
+
+/* Cartes attachees au document : une recherche terminee redessine toutes
+   celles qui la partagent, pas seulement celle qui l'a lancee. */
+const SEARCH_CARDS = new Set();
+
+const notifySearch = function (entry, from) {
+  if (from && !SEARCH_CARDS.has(from)) from._resort();
+  SEARCH_CARDS.forEach(function (card) {
+    if (card._searchKey === entry.key) card._resort();
+  });
+};
+
+/* Les carburants coches valent pour toutes les cartes de l'utilisateur. */
+const refreshSearchCards = function (from) {
+  if (from && !SEARCH_CARDS.has(from)) from._resort();
+  SEARCH_CARDS.forEach(function (card) {
+    if (card._searchKey) card._resort();
+  });
+};
+
+/* Colonnes sans donnee pour un resultat de recherche : le service ne renvoie
+   ni enseigne, ni logo, ni date de releve, ni identifiant de station. */
+const SEARCH_EMPTY_COLUMNS = ["logo", "brand", "updated", "station_id"];
+
+/* Fusionne les reponses, une liste par carburant, en une entree par station.
+   Le service ne renvoie pas d'identifiant de station : nom et adresse
+   identiques designent la meme. L'adresse arrive d'un bloc (« 12 RUE X, 75001
+   PARIS ») : elle est decoupee ici, une fois, plutot qu'a chaque rendu. Une
+   station sans aucun des prix cherches n'apporte rien au tableau. */
+const buildSearchResult = function (answers, fuels, radius) {
+  const byKey = new Map();
+  const failed = [];
+  answers.forEach(function (answer) {
+    if (answer.error) {
+      failed.push(answer);
+      return;
+    }
+    answer.stations.forEach(function (station) {
+      if (!station) return;
+      const key = String(station.name || "") + "|" + String(station.address || "");
+      let found = byKey.get(key);
+      if (!found) {
+        const parts = splitAddressCityPostal(station.address);
+        const city = properCaseCity(parts.city);
+        const rawName = station.name ? String(station.name) : "";
+        const named = rawName && rawName.toLowerCase() !== "undefined";
+        found = {
+          sid: "search:" + key,
+          attrs: {
+            name: named ? rawName : parts.street || city,
+            address: parts.street,
+            postal_code: parts.postalCode,
+            city: city,
+            latitude: toNumber(station.latitude, null),
+            longitude: toNumber(station.longitude, null)
+          },
+          fuels: {}
+        };
+        byKey.set(key, found);
+      }
+      const price = toNumber(station.price, null);
+      if (price !== null && price > 0) found.fuels[answer.fuel] = price;
     });
   });
-  return merged;
+  return {
+    stations: Array.from(byKey.values()).filter(function (s) {
+      return Object.keys(s.fuels).length > 0;
+    }),
+    /* Un carburant en erreur n'a rien a afficher : il reste coche, et le
+       bouton de recherche propose de le redemander. */
+    fuels: fuels.filter(function (fuel) {
+      return !failed.some(function (a) {
+        return a.fuel === fuel;
+      });
+    }),
+    radius: radius,
+    at: Date.now(),
+    failed: failed.map(function (a) {
+      return a.fuel;
+    }),
+    error: failed.length && failed.length === answers.length ? failed[0].error : ""
+  };
 };
 
 const STYLE = [
@@ -501,7 +717,7 @@ const STYLE = [
   "tbody tr:nth-child(even) td { background: var(--prix-carburant-stripe, rgba(127,127,127,0.12)); }",
   "tbody tr:hover td { background: var(--prix-carburant-hover, rgba(127,127,127,0.22)); }",
   "tbody tr.clickable { cursor: pointer; }",
-																	
+  "td.col-name { white-space: normal; overflow-wrap: break-word; }",
   /* Lien carte : la couleur du texte, un souligne pointille pour le signaler.
      Proprietes separees plutot que le raccourci `underline dotted` : un
      navigateur qui ignore le style du trait garde au moins le soulignement. */
@@ -524,26 +740,45 @@ const STYLE = [
   "  font: inherit; font-size: 0.85em; color: var(--secondary-text-color); }",
   "button.reset:hover { color: var(--primary-color); background: rgba(127,127,127,0.12); }",
   "button.reset:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 1px; }",
-  /* Barre de recherche : titre + rayon a gauche, boutons ronds a droite. */
-  ".searchwrap { padding: 2px 2px 12px; }",
-  ".searchbar { display: flex; align-items: center; gap: 8px; }",
+  /* Barre de recherche : titre et centre a gauche, boutons ronds a droite. Le
+     texte cede la place aux boutons, jamais l'inverse : ce sont eux qu'il faut
+     pouvoir toucher sur un telephone. */
+  ".searchwrap { padding: 2px 2px 8px; }",
+  ".searchbar { display: flex; align-items: center; gap: 6px; padding-bottom: 6px; }",
   ".searchinfo { flex: 1 1 auto; min-width: 0; }",
-  ".searchtitle { font-size: 1.2em; font-weight: 800; color: var(--primary-text-color); white-space: nowrap;",
-  "  overflow: hidden; text-overflow: ellipsis; }",
-  ".searchsub { font-size: 0.90em; color: var(--secondary-text-color); }",
-  /* Ligne de comptage des resultats, sous la barre de recherche. */
-  ".searchcount { font-size: 1em; font-weight: 700; color: var(--primary-text-color); padding: 0 2px 10px; }",
-  /* Barre de recherche : boutons de recherche. */
-  "button.searchbtn { flex: 0 0 auto; width: 44px; height: 44px; border-radius: 50%; border: none;",
+  ".searchtitle, .searchsub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }",
+  ".searchtitle { font-size: 1.15em; font-weight: 700; color: var(--primary-text-color); }",
+  ".searchsub { font-size: 0.9em; color: var(--secondary-text-color); }",
+  "button.searchbtn { flex: 0 0 auto; width: 40px; height: 40px; border-radius: 50%; border: none;",
   "  background: rgba(127,127,127,0.14); color: var(--primary-text-color); cursor: pointer;",
-  "  display: flex; align-items: center; justify-content: center; padding: 0; }",
-  "button.searchbtn:hover { background: rgba(127,127,127,0.26); }",
+  "  display: inline-flex; align-items: center; justify-content: center; padding: 0; }",
+  "button.searchbtn:hover:not(:disabled) { background: rgba(127,127,127,0.26); }",
+  "button.searchbtn:disabled { opacity: 0.4; cursor: default; }",
   "button.searchbtn:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 1px; }",
-  "button.searchbtn ha-icon { --mdc-icon-size: 24px; }",
+  "button.searchbtn ha-icon { --mdc-icon-size: 22px; }",
+  /* Reglages changes depuis la derniere recherche : le bouton le signale. */
+  "button.searchbtn.stale { background: var(--primary-color); color: var(--text-primary-color, #fff); }",
+  /* Carburants de la prochaine recherche : un clic ne lance rien, seul le
+     bouton de recherche interroge l'API. */
+  ".searchfuels { display: flex; flex-wrap: wrap; gap: 4px; }",
+  "button.fuelchip { min-height: 28px; padding: 2px 10px; border-radius: 999px; cursor: pointer;",
+  "  border: 1px solid var(--divider-color); background: transparent;",
+  "  color: var(--secondary-text-color); font: inherit; font-size: 0.85em; }",
+  "button.fuelchip:hover:not(:disabled) { border-color: var(--primary-color); color: var(--primary-text-color); }",
+  "button.fuelchip:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 1px; }",
+  "button.fuelchip.active { background: var(--primary-color); border-color: var(--primary-color);",
+  "  color: var(--text-primary-color, #fff); font-weight: 600; }",
+  "button.fuelchip:disabled { cursor: default; }",
+  /* Ligne d'etat sous la barre : nombre de resultats, ou erreur. */
+  ".searchcount { font-weight: 600; color: var(--primary-text-color); padding: 0 2px 8px; }",
+  ".searchcount.error { color: var(--error-color, #db4437); font-weight: 400; }",
   "@media (max-width: 600px) {",
   "  table { font-size: 12px; }",
   "  th, td { padding: 3px 4px; }",
   "  img.logo { height: 18px; }",
+  "  .searchbar { gap: 4px; }",
+  "  button.searchbtn { width: 36px; height: 36px; }",
+  "  button.searchbtn ha-icon { --mdc-icon-size: 20px; }",
   "}"
 ].join("\n");
 
@@ -576,10 +811,9 @@ const toNumber = function (value, fallback) {
 const isPlainObject = function (value) {
   return !!value && typeof value === "object" && !Array.isArray(value);
 };
-/* Distance a vol d'oiseau entre deux points, en km. Sert de repli quand le
-   sensor de recherche ne fournit pas de distance toute faite : seule la carte
-   "recherche" en a besoin, l'integration elle-meme calcule deja la distance
-   des stations qu'elle remonte. */
+/* Distance a vol d'oiseau entre deux points, en km. Le service de recherche
+   ne la renvoie pas, contrairement aux sensors de l'integration : la carte la
+   calcule depuis la position courante du centre de recherche. */
 const haversineKm = function (lat1, lon1, lat2, lon2) {
   if (lat1 === null || lon1 === null || lat2 === null || lon2 === null) return null;
   const toRad = function (deg) {
@@ -593,6 +827,8 @@ const haversineKm = function (lat1, lon1, lat2, lon2) {
   return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 };
 
+/* « 12 RUE X, 75001 PARIS » -> rue, code postal, ville : le service de
+   recherche renvoie l'adresse d'un seul bloc. */
 const FRENCH_POSTAL_CITY_RE = /^(.*?)[\s,\-–]*\b(\d{5})\b\s+(.+)$/;
 const splitAddressCityPostal = function (rawAddress) {
   const address = String(rawAddress || "").trim();
@@ -606,6 +842,8 @@ const splitAddressCityPostal = function (rawAddress) {
   };
 };
 
+/* « SAINT-DENIS-EN-VAL » -> « Saint-Denis-en-Val » : le referentiel ecrit
+   les villes en capitales. */
 const CITY_PARTICLES = ["sur", "sous", "la", "le", "les", "de", "du", "des", "en", "aux", "au", "et", "l"];
 const properCaseCity = function (raw) {
   const str = String(raw || "").trim();
@@ -776,8 +1014,10 @@ class PrixCarburantCard extends HTMLElement {
     this._hass = null;
     this._signature = "";
     this._rowCount = 0;
-    /* La carte a afficher est t-elle issue d'un recherche ou non. */
-    this._usingSearch = false;
+    /* Recherche a proximite du dernier passage : centre et entree de
+       `SEARCHES`. Null quand la configuration ne l'active pas. */
+    this._search = null;
+    this._searchKey = "";
     /* Tri demande a la volee par un clic sur un en-tete. Null = celui de la
        configuration. Remis a zero a chaque setConfig. */
     this._sortKey = null;
@@ -824,62 +1064,6 @@ class PrixCarburantCard extends HTMLElement {
     }
     PrixCarburantCard._readingsHass = hass;
     PrixCarburantCard._readingsValue = out;
-    return out;
-  }
- 
-  /* Tracker a utiliser pour la recherche : aucune configuration a faire, la
-     carte retrouve seule l'entite "person." de l'utilisateur Home Assistant
-     actuellement connecte au frontend. */
-  static resolveTracker(hass) {
-    const userId = hass && hass.user ? hass.user.id : "";
-    if (!userId || !hass.states) return "";
-    for (const id in hass.states) {
-      if (!Object.prototype.hasOwnProperty.call(hass.states, id)) continue;
-      if (id.slice(0, 7) !== "person.") continue;
-      const attrs = hass.states[id].attributes;
-      if (attrs && attrs.user_id === userId) return id;
-    }
-    return "";
-  }
- 
-  static searchReadings(hass, search) {
-    const out = [];
-    if (!hass || !hass.states || !search) return out;
-    const trackerId = PrixCarburantCard.resolveTracker(hass);
-    const list = trackerId ? SEARCH_RESULTS_MEMORY.get(trackerId) : null;
-    if (!Array.isArray(list) || !list.length) return out;
-    const trackerState = trackerId ? hass.states[trackerId] : null;
-    const originLat = trackerState ? toNumber(trackerState.attributes.latitude, null) : null;
-    const originLon = trackerState ? toNumber(trackerState.attributes.longitude, null) : null;
-    list.forEach(function (station, index) {
-      if (!station) return;
-      const lat = toNumber(station.latitude, null);
-      const lon = toNumber(station.longitude, null);
-      let distance = toNumber(station.distance, null);
-      if (distance === null) distance = haversineKm(originLat, originLon, lat, lon);
-      const sid = "search-" + index + "-" + brandKey(station.name) + brandKey(station.address);
-      const parsedAddress = splitAddressCityPostal(station.address);
-      const attrs = Object.assign({}, station, {
-        station_id: sid,
-        distance: distance,
-        brand: station.brand || "",
-        city: station.city || (parsedAddress.city ? properCaseCity(parsedAddress.city) : ""),
-        postal_code: station.postal_code || parsedAddress.postalCode || "",
-        address: parsedAddress.street || station.address || "",
-        name: station.name || ""
-      });
-      Object.keys(SEARCH_FUEL_KEYS).forEach(function (rawKey) {
-        const price = toNumber(station[rawKey], null);
-        if (price === null) return;
-        out.push({
-          id: null,
-          sid: sid,
-          fuel: SEARCH_FUEL_KEYS[rawKey],
-          price: price,
-          attrs: attrs
-        });
-      });
-    });
     return out;
   }
 
@@ -957,19 +1141,7 @@ class PrixCarburantCard extends HTMLElement {
     if (!isPlainObject(cfg.logos)) {
       throw new Error(t("err_logos"));
     }
-    if (cfg.search !== null && !isPlainObject(cfg.search)) {
-      throw new Error(t("err_search"));
-    }
-    if (cfg.search) {
-      cfg.search = Object.assign({}, SEARCH_DEFAULTS, cfg.search);
-      const radius = Math.round(toNumber(cfg.search.default_radius, 5));
-      cfg.search.default_radius = isFinite(radius) && radius > 0 ? radius : 5;
-      if (!Array.isArray(cfg.search.fuels) || !cfg.search.fuels.length) {
-        cfg.search.fuels = SEARCH_DEFAULTS.fuels.slice();
-      } else {
-        cfg.search.fuels = cfg.search.fuels.map(String);
-      }
-    }
+    cfg.search = normalizeSearch(cfg.search, true);
     /* `toFixed` leve une RangeError hors de 0-100 : sans ce controle, un
        `decimals: -1` ecrit a la main ferait echouer le rendu de chaque prix, et
        une exception dans le rendu emporte la carte entiere. */
@@ -1014,8 +1186,20 @@ class PrixCarburantCard extends HTMLElement {
     return this._hass;
   }
 
+  /* Une recherche lancee depuis une autre carte, ou terminee pendant que
+     celle-ci etait detachee, doit s'afficher des le retour a l'ecran. */
+  connectedCallback() {
+    SEARCH_CARDS.add(this);
+    if (this._config && this._hass) this._update();
+  }
+
+  disconnectedCallback() {
+    SEARCH_CARDS.delete(this);
+  }
+
   getCardSize() {
-    return 1 + Math.max(1, this._rowCount);
+    const search = this._search ? 2 + (this._search.entry.result ? 1 : 0) : 0;
+    return 1 + search + Math.max(1, this._rowCount);
   }
 
   /* Vue "sections" : pleine largeur par defaut, un tableau a 8 colonnes n'a
@@ -1026,49 +1210,48 @@ class PrixCarburantCard extends HTMLElement {
 
   /* ---------- construction des lignes ---------- */
 
-  _effectiveColumnEntries() {
+  /* Colonnes affichees. Des resultats de recherche n'ont ni entite, ni
+     enseigne, ni date de releve : les colonnes qui en vivent sont retirees
+     plutot que de n'aligner que des tirets, comme les carburants non cherches.
+     Les carburants cherches absents de la configuration s'ajoutent apres le
+     dernier carburant affiche ; le reste garde l'ordre de l'utilisateur. */
+  _columnEntries() {
     const cfg = this._config;
-    if (!this._usingSearch) return cfg.columns;
-    const searchFuels = (cfg.search && cfg.search.fuels) || SEARCH_DEFAULTS.fuels;
+    if (!this._showsSearch()) return cfg.columns;
+    const fuels = this._shownFuels();
     const list = cfg.columns.filter(function (entry) {
       const key = columnKeyOf(entry);
-      if (key === "logo" || key === "updated") return false;
-      if (!META[key]) return searchFuels.indexOf(key) !== -1;
-      return true;
+      if (!META[key]) return fuels.indexOf(key) !== -1;
+      return SEARCH_EMPTY_COLUMNS.indexOf(key) === -1;
     });
-    const nameIndex = list.findIndex(function (entry) {
-      return columnKeyOf(entry) === "name";
+    const keys = list.map(columnKeyOf);
+    /* Sans colonne d'identite, rien ne dirait de quelle station il s'agit. */
+    const identified = keys.some(function (key) {
+      return key === "name" || key === "address" || key === "city";
     });
-    const nameEntry = nameIndex === -1 ? "name" : list.splice(nameIndex, 1)[0];
-    const distIndex = list.findIndex(function (entry) {
-      return columnKeyOf(entry) === "distance";
-    });
-    list.splice(distIndex === -1 ? 0 : distIndex + 1, 0, nameEntry);
-    let lastFuelIndex = -1;
-    list.forEach(function (entry, index) {
-      if (!META[columnKeyOf(entry)]) lastFuelIndex = index;
-    });
-    let insertAt;
-    if (lastFuelIndex !== -1) insertAt = lastFuelIndex + 1;
-    else {
-      const afterName = list.findIndex(function (entry) {
-        return columnKeyOf(entry) === "name";
-      });
-      insertAt = afterName === -1 ? list.length : afterName + 1;
+    if (!identified) {
+      list.unshift("name");
+      keys.unshift("name");
     }
-    const present = list.map(columnKeyOf);
-    searchFuels.forEach(function (fuel) {
-      if (present.indexOf(fuel) !== -1) return;
+    let insertAt = list.length;
+    for (let i = keys.length - 1; i >= 0; i--) {
+      if (!META[keys[i]]) {
+        insertAt = i + 1;
+        break;
+      }
+    }
+    fuels.forEach(function (fuel) {
+      if (keys.indexOf(fuel) !== -1) return;
       list.splice(insertAt, 0, fuel);
+      keys.splice(insertAt, 0, fuel);
       insertAt++;
-      present.push(fuel);
     });
     return list;
   }
-  
+
   _columns() {
     const cfg = this._config;
-    return this._effectiveColumnEntries().map(function (entry) {
+    return this._columnEntries().map(function (entry) {
       const spec = typeof entry === "string" ? { key: entry } : Object.assign({}, entry);
       const key = columnKeyOf(entry);
       const meta = META[key];
@@ -1121,13 +1304,23 @@ class PrixCarburantCard extends HTMLElement {
     return row.attrs.entity_picture || "";
   }
 
-  /* Tri courant : clic sur un en-tete s'il y en a eu un, sinon configuration. */
+  /* Tri courant : clic sur un en-tete s'il y en a eu un, sinon configuration.
+     Sur des resultats de recherche, un tri configure qui n'y a pas de sens
+     (ordre personnalise, date, carburant non cherche...) cede la place a la
+     distance, plutot que de rendre l'ordre de l'API sans le dire. */
   _activeSort() {
     const cfg = this._config;
-    return {
-      key: this._sortKey !== null ? this._sortKey : cfg.sort,
-      desc: this._sortDesc !== null ? this._sortDesc : !!cfg.sort_desc
-    };
+    const key = this._sortKey !== null ? this._sortKey : cfg.sort;
+    const desc = this._sortDesc !== null ? this._sortDesc : !!cfg.sort_desc;
+    if (this._sortKey === null && this._showsSearch() && !this._searchSortable(key)) {
+      return { key: "distance", desc: false };
+    }
+    return { key: key, desc: desc };
+  }
+
+  _searchSortable(key) {
+    if (["name", "address", "city", "postal_code", "distance"].indexOf(key) !== -1) return true;
+    return this._shownFuels().indexOf(key) !== -1;
   }
 
   /* Valeur comparable d'une ligne pour une colonne. `null` = valeur absente,
@@ -1198,30 +1391,66 @@ class PrixCarburantCard extends HTMLElement {
     return rows;
   }
 
-  _searchActive() {
-    return !!this._config.search;
+  /* Des resultats de recherche remplacent les stations suivies. Une recherche
+     tombee entierement en erreur, elle, les laisse en place : le message
+     s'affiche au-dessus, sans vider le tableau. */
+  _showsSearch() {
+    const result = this._search ? this._search.entry.result : null;
+    return !!result && !result.error;
   }
 
+  /* Carburants affiches : ceux de la derniere recherche encore coches.
+     Decocher un carburant le retire donc aussitot du tableau, sans appel ;
+     en cocher un nouveau demande de relancer la recherche. */
+  _shownFuels() {
+    const selected = this._search.fuels;
+    return this._search.entry.result.fuels.filter(function (fuel) {
+      return selected.indexOf(fuel) !== -1;
+    });
+  }
+
+  /* Lignes d'une recherche : les stations qui ont au moins un prix affiche.
+     La distance est recalculee depuis la position courante du centre : elle
+     suit le telephone qui se deplace, sans nouvel appel au service. Arrondie a
+     la precision affichee, elle ne redessine pas la carte pour quelques
+     metres. */
   _searchRows() {
-    return this._searchActive() ? PrixCarburantCard.searchReadings(this._hass, this._config.search) : [];
+    const state = this._hass.states[this._search.origin.id];
+    const lat = state ? toNumber(state.attributes.latitude, null) : null;
+    const lon = state ? toNumber(state.attributes.longitude, null) : null;
+    const fuels = this._shownFuels();
+    const priced = function (station) {
+      return fuels.some(function (fuel) {
+        return typeof station.fuels[fuel] === "number";
+      });
+    };
+    return this._search.entry.result.stations.filter(priced).map(function (station) {
+      const km = haversineKm(lat, lon, station.attrs.latitude, station.attrs.longitude);
+      return {
+        sid: station.sid,
+        attrs: Object.assign({}, station.attrs, {
+          distance: km === null ? null : Math.round(km * 10) / 10
+        }),
+        ids: [],
+        fuels: station.fuels,
+        updated: null
+      };
+    });
   }
 
   _rows() {
+    if (this._showsSearch()) return this._sortRows(this._searchRows());
     const cfg = this._config;
-    const searchRows = this._searchRows();
-    const searching = searchRows.length > 0;
-    this._usingSearch = searching;
     const wanted = cfg.stations;
-    const source = searching ? searchRows : PrixCarburantCard.readings(this._hass);
     const byStation = new Map();
-    source.forEach(function (r) {
-      if (!searching && wanted.length && wanted.indexOf(r.sid) === -1) return;
+    PrixCarburantCard.readings(this._hass).forEach(function (r) {
+      if (wanted.length && wanted.indexOf(r.sid) === -1) return;
       let station = byStation.get(r.sid);
       if (!station) {
         station = { sid: r.sid, attrs: r.attrs, ids: [], fuels: {}, updated: null };
         byStation.set(r.sid, station);
       }
-      if (r.id) station.ids.push(r.id);
+      station.ids.push(r.id);
       if (r.price !== null) station.fuels[r.fuel] = r.price;
       const stamp = r.attrs.updated_date ? Date.parse(r.attrs.updated_date) : NaN;
       if (isFinite(stamp) && (station.updated === null || stamp > station.updated)) {
@@ -1263,48 +1492,43 @@ class PrixCarburantCard extends HTMLElement {
 
   /* ---------- rendu ---------- */
 
-  /* Entites dont un changement d'etat doit reprovoquer un rendu. */
-  _watchedEntities() {
-    if (this._searchActive()) {
-      const ids = [];
-      const trackerId = PrixCarburantCard.resolveTracker(this._hass);
-      if (trackerId) ids.push(trackerId);
-      /* Sans resultat de recherche exploitable, la carte affiche la carte par défaut. */
-      if (!this._searchRows().length) {
-        PrixCarburantCard.readings(this._hass).forEach(function (r) {
-          ids.push(r.id);
-        });
-      }
-      return ids;
-    }
-    return PrixCarburantCard.readings(this._hass).map(function (r) {
-      return r.id;
-    });
-  }
-
   _update() {
     if (!this._config || !this._hass) return;
-    /* Sensors a surveiller au prochain `set hass`, releves ici pendant que la
-       liste est de toute facon parcourue. */
-    this._watched = this._watchedEntities();
-				  
-	   
+    const search = this._config.search;
+    if (search) {
+      loadSearchPrefs(this._hass);
+      const entry = searchEntry(search);
+      const available = searchableFuels(this._hass);
+      this._search = {
+        origin: searchOrigin(this._hass, search),
+        entry: entry,
+        available: available,
+        fuels: selectedFuels(available)
+      };
+      this._searchKey = entry.key;
+    } else {
+      this._search = null;
+      this._searchKey = "";
+    }
+    /* Entites a surveiller au prochain `set hass`, relevees ici pendant que la
+       liste est de toute facon parcourue : les sensors de l'integration tant
+       qu'ils sont affiches, et ce qui situe le centre d'une recherche. */
+    const watched = this._showsSearch()
+      ? []
+      : PrixCarburantCard.readings(this._hass).map(function (r) {
+          return r.id;
+        });
+    if (this._search) watched.push.apply(watched, this._search.origin.watch);
+    this._watched = watched;
     this._stateCount = statesCount(this._hass);
     const rows = this._rows();
     const active = this._activeSort();
-    const trackerId = this._searchActive() ? PrixCarburantCard.resolveTracker(this._hass) : "";
-    const radiusSig = this._searchActive() ? String(currentRadius(this._config.search, trackerId)) : "";
-    const pendingSig = trackerId && SEARCH_PENDING.has(trackerId) ? "pending" : "";
     const signature =
       active.key +
       "/" +
       active.desc +
       "/" +
-      radiusSig +
-      "/" +
-      trackerId +
-      "/" +
-      pendingSig +
+      this._searchSignature() +
       "#" +
       rows
         .map(function (r) {
@@ -1321,6 +1545,38 @@ class PrixCarburantCard extends HTMLElement {
     this._signature = signature;
     this._rowCount = rows.length;
     this._render(rows);
+  }
+
+  /* Ce que la barre de recherche affiche, hors lignes du tableau. */
+  _searchSignature() {
+    if (!this._search) return "";
+    const origin = this._search.origin;
+    const entry = this._search.entry;
+    return [
+      origin.located ? this._originName() : "",
+      this._search.available.join(","),
+      this._search.fuels.join(","),
+      entry.radius,
+      entry.pending,
+      entry.result ? entry.result.at : ""
+    ].join("|");
+  }
+
+  /* Carburants ou rayon changes depuis la derniere recherche : ses resultats
+     ne correspondent plus a ce qui est coche. */
+  _searchStale() {
+    const entry = this._search.entry;
+    const result = entry.result;
+    if (!result) return false;
+    if (entry.radius !== result.radius) return true;
+    return this._search.fuels.some(function (fuel) {
+      return result.fuels.indexOf(fuel) === -1;
+    });
+  }
+
+  _originName() {
+    const state = this._hass.states[this._search.origin.id];
+    return (state && state.attributes.friendly_name) || this._search.origin.id;
   }
 
   /* Une liste `stations` non vide fige un ordre voulu par l'utilisateur, que
@@ -1374,14 +1630,47 @@ class PrixCarburantCard extends HTMLElement {
 
   /* ---------- barre de recherche ---------- */
 
-  /* Modifie le rayon en memoire (voir RADIUS_MEMORY) et redessine immediatement la barre */
-  _adjustRadius(delta) {
-    const trackerId = PrixCarburantCard.resolveTracker(this._hass);
-    setCurrentRadius(trackerId, currentRadius(this._config.search, trackerId) + delta);
-    this._resort();
+  /* Le rayon et les resultats appartiennent a l'entree de `SEARCHES` : toutes
+     les cartes qui la partagent sont redessinees. */
+  _changeRadius(delta) {
+    const entry = this._search.entry;
+    const next = clampRadius(entry.radius + delta);
+    if (next === entry.radius) return;
+    entry.radius = next;
+    notifySearch(entry, this);
   }
 
-  /* Bouton rond icone seule (rayon +/-, lancer, effacer) */
+  /* Le dernier carburant coche ne se decoche pas : une recherche sans
+     carburant ne chercherait rien. La liste enregistree est recomposee depuis
+     ce qui est coche a l'ecran, qui peut differer d'elle (repli sur tous) ; les
+     carburants que cette carte ne propose pas y gardent leur etat. */
+  _toggleSearchFuel(code) {
+    const available = this._search.available;
+    const selected = this._search.fuels;
+    const on = selected.indexOf(code) !== -1;
+    if (on && selected.length === 1) return;
+    const off = SEARCH_PREFS.off.filter(function (fuel) {
+      return available.indexOf(fuel) === -1;
+    });
+    available.forEach(function (fuel) {
+      const checked = fuel === code ? !on : selected.indexOf(fuel) !== -1;
+      if (!checked) off.push(fuel);
+    });
+    SEARCH_PREFS.off = off;
+    saveSearchPrefs(this._hass);
+    refreshSearchCards(this);
+  }
+
+  _clearSearch() {
+    const entry = this._search.entry;
+    /* Une reponse encore en route sera ignoree a son arrivee. */
+    entry.generation++;
+    entry.pending = false;
+    entry.result = null;
+    notifySearch(entry, this);
+  }
+
+  /* Bouton rond, icone seule : le libelle passe par `title` et `aria-label`. */
   _iconButton(icon, title, onClick, disabled) {
     const btn = document.createElement("button");
     btn.type = "button";
@@ -1394,21 +1683,22 @@ class PrixCarburantCard extends HTMLElement {
     btn.appendChild(ico);
     btn.addEventListener("click", function (ev) {
       ev.stopPropagation();
-      if (!btn.disabled) onClick();
+      onClick();
     });
     return btn;
   }
 
   _searchBar() {
-    const search = this._config.search;
     const self = this;
-    const trackerId = PrixCarburantCard.resolveTracker(this._hass);
-    const pending = trackerId ? SEARCH_PENDING.has(trackerId) : false;
-    const hasResults = trackerId ? !!(SEARCH_RESULTS_MEMORY.get(trackerId) || []).length : false;
-    const wrapper = document.createElement("div");
-    wrapper.className = "searchwrap";
+    const origin = this._search.origin;
+    const entry = this._search.entry;
+    const stale = this._searchStale();
+    const wrap = document.createElement("div");
+    wrap.className = "searchwrap";
     const bar = document.createElement("div");
     bar.className = "searchbar";
+    wrap.appendChild(bar);
+
     const info = document.createElement("div");
     info.className = "searchinfo";
     const title = document.createElement("div");
@@ -1417,92 +1707,151 @@ class PrixCarburantCard extends HTMLElement {
     info.appendChild(title);
     const sub = document.createElement("div");
     sub.className = "searchsub";
-    sub.textContent = t("search_radius", { radius: currentRadius(search, trackerId) });
+    sub.textContent = origin.located
+      ? t("search_origin", { name: this._originName(), radius: entry.radius })
+      : t("search_no_origin");
+    /* Tronquee sur un telephone : le texte complet reste au survol. */
+    sub.title = sub.textContent;
     info.appendChild(sub);
     bar.appendChild(info);
+
     bar.appendChild(
-      this._iconButton("mdi:minus", t("search_decrease"), function () {
-        self._adjustRadius(-1);
-      })
-    );
-    bar.appendChild(
-      this._iconButton("mdi:plus", t("search_increase"), function () {
-        self._adjustRadius(1);
-      })
+      this._iconButton(
+        "mdi:minus",
+        t("search_decrease"),
+        function () {
+          self._changeRadius(-1);
+        },
+        entry.radius <= SEARCH_RADIUS_MIN
+      )
     );
     bar.appendChild(
       this._iconButton(
-        pending ? "mdi:timer-sand" : "mdi:magnify",
-        t("search_run"),
+        "mdi:plus",
+        t("search_increase"),
         function () {
-          self._runSearch();
+          self._changeRadius(1);
         },
-        pending
+        entry.radius >= SEARCH_RADIUS_MAX
       )
     );
-    if (hasResults) {
+    const run = this._iconButton(
+      entry.pending ? "mdi:timer-sand" : "mdi:magnify",
+      entry.pending ? t("search_running") : stale ? t("search_apply") : t("search_run"),
+      function () {
+        self._runSearch();
+      },
+      entry.pending || !origin.located
+    );
+    if (stale && !entry.pending) run.classList.add("stale");
+    bar.appendChild(run);
+    if (entry.result) {
       bar.appendChild(
         this._iconButton("mdi:close", t("search_reset"), function () {
-          if (trackerId) SEARCH_RESULTS_MEMORY.delete(trackerId);
-          self._resort();
+          self._clearSearch();
         })
       );
     }
-    wrapper.appendChild(bar);
-    return wrapper;
+
+    /* Un seul carburant propose : rien a choisir, pas de pastilles. */
+    const available = this._search.available;
+    if (available.length < 2) return wrap;
+    const selected = this._search.fuels;
+    const chips = document.createElement("div");
+    chips.className = "searchfuels";
+    available.forEach(function (code) {
+      const on = selected.indexOf(code) !== -1;
+      const locked = on && selected.length === 1;
+      const chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = on ? "fuelchip active" : "fuelchip";
+      chip.textContent = fuelLabel(code);
+      chip.setAttribute("aria-pressed", on ? "true" : "false");
+      chip.disabled = locked;
+      chip.title = locked
+        ? t("lock_fuel")
+        : t(on ? "search_fuel_on" : "search_fuel_off", { fuel: fuelLabel(code) });
+      chip.addEventListener("click", function (ev) {
+        ev.stopPropagation();
+        self._toggleSearchFuel(code);
+      });
+      chips.appendChild(chip);
+    });
+    wrap.appendChild(chips);
+    return wrap;
   }
 
-  _searchCountLine(rowCount) {
-    const trackerId = PrixCarburantCard.resolveTracker(this._hass);
-    const key = rowCount === 1 ? "search_count_one" : "search_count_other";
+  /* Ligne d'etat sous la barre : nombre de stations, rayon et heure de la
+     recherche (les prix ne sont pas rafraichis tant qu'on ne la relance
+     pas), ou message d'erreur de Home Assistant. */
+  _searchStatus(rowCount) {
+    const result = this._search.entry.result;
     const line = document.createElement("div");
     line.className = "searchcount";
-    line.textContent = t(key, { count: rowCount, radius: currentRadius(this._config.search, trackerId) });
+    if (result.error) {
+      line.classList.add("error");
+      line.textContent = t("search_failed", { message: result.error });
+      return line;
+    }
+    const time = new Date(result.at).toLocaleTimeString(currentLang === "fr" ? "fr-FR" : "en-GB", {
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+    /* Le francais met zero au singulier, l'anglais au pluriel. */
+    const one = rowCount === 1 || (rowCount === 0 && currentLang === "fr");
+    let text = t(one ? "search_count_one" : "search_count_other", {
+      count: rowCount,
+      radius: result.radius,
+      time: time
+    });
+    if (result.failed.length) {
+      text += t("search_partial", { fuels: result.failed.map(fuelLabel).join(", ") });
+    }
+    line.textContent = text;
     return line;
   }
 
-  /* Lance la recherche : un appel direct au service de l'integration par
-     carburant configure (`search.fuels`). Les reponses sont fusionnees (voir
-     `mergeStationsByFuel` et gardees en memoire pour l'utilisateur actif (voir
-     SEARCH_RESULTS_MEMORY).
-     Aucune verification de tracker avant de lancer les appels : si
-     l'utilisateur actif n'en a pas (voir `resolveTracker`), le service est
-     tout de meme appele avec un tracker vide, et c'est a Home Assistant - via
-     son propre mecanisme d'erreur d'appel de service - de signaler l'echec. */
+  /* Un appel au service par carburant, en parallele. Les erreurs ne passent
+     pas par les notifications de Home Assistant, qui en afficheraient une par
+     carburant : la carte les rapporte elle-meme, sur sa ligne d'etat. */
   _runSearch() {
-    const search = this._config.search;
-    const trackerId = PrixCarburantCard.resolveTracker(this._hass);
-    const radius = currentRadius(search, trackerId);
-    const fuels = Array.isArray(search.fuels) && search.fuels.length ? search.fuels : SEARCH_DEFAULTS.fuels;
+    const origin = this._search.origin;
+    const entry = this._search.entry;
+    if (entry.pending || !origin.located) return;
     const self = this;
-    const pendingKey = trackerId || ANONYMOUS_KEY;
-    if (SEARCH_PENDING.has(pendingKey)) return;
-    SEARCH_PENDING.add(pendingKey);
-    this._resort();
-    const calls = fuels.map(function (fuel, index) {
+    const radius = entry.radius;
+    const fuels = this._search.fuels.slice();
+    const generation = ++entry.generation;
+    entry.pending = true;
+    notifySearch(entry, this);
+    const calls = fuels.map(function (fuel) {
       return self._hass
         .callService(
           "prix_carburant",
           "find_nearest_stations",
-          { entity_id: trackerId, distance: radius, fuel: fuel },
+          { entity_id: origin.id, fuel: fuel, distance: radius },
           undefined,
-          index === 0,
+          false,
           true
         )
-        .then(function (result) {
-          return { fuel: fuel, stations: (result && result.response && result.response.stations) || [] };
-        })
-        .catch(function () {
-          return { fuel: fuel, stations: [] };
-        });
+        .then(
+          function (res) {
+            const stations = res && res.response ? res.response.stations : null;
+            return { fuel: fuel, stations: Array.isArray(stations) ? stations : [] };
+          },
+          function (err) {
+            return { fuel: fuel, stations: [], error: (err && err.message) || String(err) };
+          }
+        );
     });
-    Promise.all(calls).then(function (perFuelResults) {
-      if (trackerId) SEARCH_RESULTS_MEMORY.set(trackerId, mergeStationsByFuel(perFuelResults));
-      SEARCH_PENDING.delete(pendingKey);
-      self._resort();
+    Promise.all(calls).then(function (answers) {
+      if (generation !== entry.generation) return;
+      entry.pending = false;
+      entry.result = buildSearchResult(answers, fuels, radius);
+      notifySearch(entry, self);
     });
   }
-  
+
   _render(rows) {
     const cfg = this._config;
     const root = this.shadowRoot;
@@ -1535,16 +1884,18 @@ class PrixCarburantCard extends HTMLElement {
 
     const self = this;
 
-    const searchActive = this._searchActive();
-    if (searchActive) wrap.appendChild(this._searchBar());
-    /* Nombre de resultats : uniquement quand une recherche a reellement ete lancée */
-    if (searchActive && this._usingSearch) wrap.appendChild(this._searchCountLine(rows.length));
+    if (this._search) {
+      wrap.appendChild(this._searchBar());
+      if (this._search.entry.result) wrap.appendChild(this._searchStatus(rows.length));
+    }
 
     if (!rows.length) {
       const empty = document.createElement("div");
       empty.className = "empty";
-      empty.textContent = this._usingSearch
-        ? t("no_search")
+      empty.textContent = this._showsSearch()
+        ? this._shownFuels().length
+          ? t("no_search")
+          : t("search_rerun")
         : cfg.stations.length
           ? t("no_wanted_station")
           : t("no_station");
@@ -1801,7 +2152,6 @@ const EDITOR_STYLE = [
   ".row.head-row { border-bottom: 1px solid var(--divider-color); margin-bottom: 4px;",
   "  padding-bottom: 6px; }",
   ".row .grow { flex: 1 1 auto; min-width: 0; }",
-  ".displaysearch { margin-bottom: 10px; }",
   ".row.off .label { color: var(--secondary-text-color); }",
   ".row.off .logo-box { opacity: 0.5; }",
   ".label { flex: 0 0 34%; min-width: 0; }",
@@ -1844,17 +2194,6 @@ const EDITOR_STYLE = [
   "button.mini:disabled { opacity: 0.3; cursor: default; }",
   ".empty { color: var(--secondary-text-color); font-size: 13px; padding: 6px 0; }",
 
-  /* Puces de selection des carburants, coloree en carburant selectionne. */
-  ".fuelchips { display: flex; flex-wrap: wrap; gap: 6px; margin: 2px 0 12px; }",
-  "button.fuelchip { flex: 0 0 auto; padding: 6px 14px; border-radius: 999px;",
-  "  border: 1px solid var(--divider-color); background: transparent;",
-  "  color: var(--secondary-text-color); font: inherit; font-size: 13px; cursor: pointer; }",
-  "button.fuelchip:hover:not(:disabled) { border-color: var(--primary-color); color: var(--primary-text-color); }",
-  "button.fuelchip:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 1px; }",
-  "button.fuelchip.active { background: var(--primary-color); border-color: var(--primary-color);",
-  "  color: var(--text-primary-color, #fff); font-weight: 600; }",
-  "button.fuelchip:disabled { opacity: 0.5; cursor: default; }",
-
   /* Barre laterale etroite : le libelle passe au-dessus des champs. */
   "@media (max-width: 460px) {",
   "  .row { flex-wrap: wrap; padding: 6px 0; }",
@@ -1885,7 +2224,6 @@ class PrixCarburantCardEditor extends HTMLElement {
     this._sigColumns = null;
     this._sigNames = null;
     this._sigLogos = null;
-    this._sigSearch = null;
   }
 
   setConfig(config) {
@@ -1901,10 +2239,7 @@ class PrixCarburantCardEditor extends HTMLElement {
     this._config.station_names = stringKeys(this._config.station_names);
     this._config.station_cities = stringKeys(this._config.station_cities);
     this._config.logos = stringKeys(this._config.logos);
-    if (!isPlainObject(this._config.search)) this._config.search = null;
-    if (this._config.search) {
-      this._config.search = Object.assign({}, SEARCH_DEFAULTS, this._config.search);
-    }
+    this._config.search = normalizeSearch(this._config.search, false);
     this._watched = null;
     this._render();
   }
@@ -1942,9 +2277,10 @@ class PrixCarburantCardEditor extends HTMLElement {
     if (!next.title) delete next.title;
     if (!next.logo_path) delete next.logo_path;
     if (next.map_link === "none") delete next.map_link;
-    if (isPlainObject(next.search)) {
-      next.search = Object.assign({}, SEARCH_DEFAULTS, next.search);
-    }
+    /* Recherche desactivee : pas de `search: null` dans le YAML. */
+    const search = normalizeSearch(next.search, false);
+    if (search) next.search = search;
+    else delete next.search;
     this._config = Object.assign({}, DEFAULTS, next);
     fireEvent(this, "config-changed", { config: next });
   }
@@ -2005,20 +2341,13 @@ class PrixCarburantCardEditor extends HTMLElement {
     ];
   }
 
-  _schemaDisplayTop() {
-    return [
-      { name: "title", selector: { text: {} } },
-      { name: "show_title", selector: { boolean: {} } }
-    ];
-  }
-
-  _schemaDisplayBottom() {
+  _schemaDisplay() {
     const maps = MAP_LINK_MODES.map(function (key) {
       return { value: key, label: t("opt_map_" + key) };
     });
     return [
-												
-														
+      { name: "title", selector: { text: {} } },
+      { name: "show_title", selector: { boolean: {} } },
       { name: "unit", selector: { text: {} } },
       { name: "decimals", selector: { number: { min: 0, max: 3, mode: "box" } } },
       { name: "highlight", selector: { boolean: {} } },
@@ -2031,9 +2360,23 @@ class PrixCarburantCardEditor extends HTMLElement {
     return [{ name: "logo_path", selector: { text: {} } }];
   }
 
+  /* Le centre de recherche doit porter une position : personne, traceur ou
+     zone. */
   _schemaSearch() {
     return [
-      { name: "default_radius", selector: { number: { min: 1, max: 200, mode: "box", unit_of_measurement: "km" } } }
+      {
+        name: "default_radius",
+        selector: {
+          number: {
+            min: SEARCH_RADIUS_MIN,
+            max: SEARCH_RADIUS_MAX,
+            step: 1,
+            mode: "box",
+            unit_of_measurement: "km"
+          }
+        }
+      },
+      { name: "entity", selector: { entity: { domain: ["person", "device_tracker", "zone"] } } }
     ];
   }
 
@@ -2288,7 +2631,6 @@ class PrixCarburantCardEditor extends HTMLElement {
     this._sigColumns = null;
     this._sigNames = null;
     this._sigLogos = null;
-    this._sigSearch = null;
     this._render();
   }
 
@@ -2701,100 +3043,54 @@ class PrixCarburantCardEditor extends HTMLElement {
     });
   }
 
-  /* ---------- recherche a proximite, dans la section "Affichage" ---------- */
-  _fuelChipsField() {
-    const cfg = this._config;
-    const self = this;
-    const field = document.createElement("div");
-    const caption = document.createElement("div");
-    caption.className = "hint";
-    caption.style.margin = "0 0 4px";
-    caption.textContent = t("ed_search_fuels");
-    field.appendChild(caption);
-    const chips = document.createElement("div");
-    chips.className = "fuelchips";
-    const active = (cfg.search.fuels || SEARCH_DEFAULTS.fuels).slice();
-    SEARCH_FUEL_CODES.forEach(function (code) {
-      const isActive = active.indexOf(code) !== -1;
-      const chip = document.createElement("button");
-      chip.type = "button";
-      chip.className = isActive ? "fuelchip active" : "fuelchip";
-      chip.textContent = fuelLabel(code);
-      const title = t(isActive ? "hide_station" : "show_station", { label: fuelLabel(code) });
-      chip.title = title;
-      chip.setAttribute("aria-label", title);
-      if (isActive && active.length === 1) {
-        chip.disabled = true;
-        chip.title = t("lock_fuel");
-        chip.setAttribute("aria-label", t("lock_fuel"));
-      }
-      chip.addEventListener("click", function () {
-        self._toggleFuel(code, !isActive);
-      });
-      chips.appendChild(chip);
-    });
-    field.appendChild(chips);
-    return field;
-  }
+  /* ---------- panneau "recherche a proximite" ----------
 
-  _toggleFuel(code, enable) {
-    const cfg = this._config;
-    const current = (cfg.search.fuels || SEARCH_DEFAULTS.fuels).slice();
-    let next;
-    if (enable) {
-      next = current.indexOf(code) === -1 ? current.concat([code]) : current;
-    } else {
-      next = current.filter(function (item) {
-        return item !== code;
-      });
-      if (!next.length) return;
-    }
-    this._emit({ search: Object.assign({}, cfg.search, { fuels: next }) });
-  }
-
-  _renderDisplaySearch() {
-    const wrap = this._displaySearchWrap;
-    const cfg = this._config;
-    const enabled = !!cfg.search;
-    const signature = enabled + "|" + JSON.stringify(cfg.search || {});
-    if (signature === this._sigSearch) return;
-    this._sigSearch = signature;
-    wrap.innerHTML = "";
+     Construite une fois, puis mise a jour par `_renderSearch` : un formulaire
+     recree a chaque modification perdrait le focus a chaque frappe dans le
+     champ du rayon. Les carburants ne s'y reglent pas : ils se cochent sur la
+     carte, et le choix est enregistre pour l'utilisateur. */
+  _buildSearch() {
     const self = this;
+    const wrap = document.createElement("div");
 
     const row = document.createElement("div");
     row.className = "row";
-    const toggle = this._switch(enabled, t("ed_search_enable"), function (value) {
-      if (value) {
-        self._emit({ search: Object.assign({}, SEARCH_DEFAULTS) });
-      } else {
-        const next = Object.assign({}, self._config);
-        delete next.search;
-        self._config = Object.assign({}, DEFAULTS, next);
-        fireEvent(self, "config-changed", { config: next });
-      }
+    this._searchSwitch = this._switch(false, t("ed_search_enable"), function (on) {
+      self._emit({ search: on ? { default_radius: SEARCH_DEFAULTS.default_radius } : null });
     });
-
-    row.appendChild(this._label(t("ed_search_enable"), null));
-    row.appendChild(toggle);
+    row.appendChild(this._searchSwitch);
+    row.appendChild(this._label(t("ed_search_enable"), t("ed_search_enable_sub")));
     wrap.appendChild(row);
 
-    if (!enabled) return;
-
-    wrap.appendChild(this._fuelChipsField());
+    const options = document.createElement("div");
 
     const form = document.createElement("ha-form");
-    form.hass = this._hass;
     form.schema = this._schemaSearch();
-    form.data = Object.assign({}, SEARCH_DEFAULTS, cfg.search);
     form.computeLabel = function (schema) {
-      return t("ed_search_" + schema.name) || schema.name;
+      return t("ed_search_" + schema.name);
+    };
+    form.computeHelper = function (schema) {
+      return schema.name === "entity" ? t("help_search_entity") : "";
     };
     form.addEventListener("value-changed", function (ev) {
       ev.stopPropagation();
       self._emit({ search: Object.assign({}, self._config.search, ev.detail.value) });
     });
-    wrap.appendChild(form);
+    options.appendChild(form);
+
+    this._searchOptions = options;
+    this._searchForm = form;
+    wrap.appendChild(options);
+    return wrap;
+  }
+
+  _renderSearch() {
+    const search = this._config.search;
+    this._searchSwitch.checked = !!search;
+    this._searchOptions.style.display = search ? "" : "none";
+    if (!search) return;
+    this._searchForm.hass = this._hass;
+    this._searchForm.data = search;
   }
 
   /* ---------- assemblage ---------- */
@@ -2843,11 +3139,7 @@ class PrixCarburantCardEditor extends HTMLElement {
 
     /* 4. Habillage. */
     this._panelDisplay = this._section(t("sec_display"), null, false);
-    this._panelDisplay._body.appendChild(this._form("displayTop"));
-    this._displaySearchWrap = document.createElement("div");
-    this._displaySearchWrap.className = "displaysearch";
-    this._panelDisplay._body.appendChild(this._displaySearchWrap);
-    this._panelDisplay._body.appendChild(this._form("displayBottom"));
+    this._panelDisplay._body.appendChild(this._form("display"));
 
     this._panelNames = this._section(t("sec_names"), t("sec_names_hint"), false);
 
@@ -2855,13 +3147,19 @@ class PrixCarburantCardEditor extends HTMLElement {
     /* Le prefixe est insere avant le corps du panneau, que `_renderLogos` vide. */
     this._panelLogos._inner.insertBefore(this._form("logoPath"), this._panelLogos._body);
 
+    /* 5. Option a part : desactivee par defaut, elle ne gene pas les reglages
+       du tableau lui-meme. */
+    this._panelSearch = this._section(t("sec_search"), t("sec_search_hint"), false);
+    this._panelSearch._body.appendChild(this._buildSearch());
+
     [
       this._panelStations,
       this._panelSort,
       this._panelColumns,
       this._panelDisplay,
       this._panelNames,
-      this._panelLogos
+      this._panelLogos,
+      this._panelSearch
     ].forEach(
       function (panel) {
         this.shadowRoot.appendChild(panel);
@@ -2911,6 +3209,12 @@ class PrixCarburantCardEditor extends HTMLElement {
     this._panelLogos._setSummary(
       logos ? t(logos > 1 ? "sum_logos" : "sum_logo", { count: logos }) : t("sum_no_logo")
     );
+
+    this._panelSearch._setSummary(
+      cfg.search
+        ? t("sum_search_on", { radius: cfg.search.default_radius })
+        : t("sum_search_off")
+    );
   }
 
   _render() {
@@ -2926,13 +3230,12 @@ class PrixCarburantCardEditor extends HTMLElement {
     this._forms.forEach(function (form) {
       form.hass = self._hass;
       if (form._schemaName === "sort") form.schema = self._schemaSort();
-      else if (form._schemaName === "displayTop") form.schema = self._schemaDisplayTop();
-      else if (form._schemaName === "displayBottom") form.schema = self._schemaDisplayBottom();
+      else if (form._schemaName === "display") form.schema = self._schemaDisplay();
       else form.schema = self._schemaLogoPath();
       form.data = self._config;
     });
 
-    this._renderDisplaySearch();
+    this._renderSearch();
     this._renderStations();
     this._renderColumns();
     this._renderNames();

@@ -12,14 +12,15 @@ une colonne par carburant.
 - **Tri** configurable et **clic sur les en-têtes** pour trier à la volée.
 - **Noms et villes surchargeables**, **logos** par enseigne ou par station.
 - Prix le plus bas en vert, le plus haut en rouge, **ex æquo compris**.
-- Éditeur graphique en six sections repliables, alimenté par ce que l'intégration
+- Éditeur graphique en sept sections repliables, alimenté par ce que l'intégration
   remonte réellement.
 - Sélecteur de carte **« par entité »** de HA 2026.6+ : cliquer sur un sensor de
   l'intégration propose deux mises en page prêtes à l'emploi.
-- La carte peut rechercher et afficher les stations situées autour de l'utilisateur dans un rayon défini.
+- **Recherche à proximité**, optionnelle : les stations les moins chères autour de toi, via
+  le service de l'intégration, sans quitter le tableau de bord.
 - **Français et anglais**, carte et éditeur, suivant la langue de Home Assistant.
 
-Version de la carte : **1.0.4** · Home Assistant **2024.4+** (le sélecteur par entité
+Version de la carte : **1.0.6** · Home Assistant **2024.4+** (le sélecteur par entité
 demande 2026.6+, il est simplement ignoré avant).
 
 ## Installation
@@ -102,16 +103,10 @@ highlight: true               # coloration du prix mini / maxi
 color_min: "#4caa40"
 color_max: "#e05252"
 
-# ---- Barre de recherche des stations à proximité ----------------------------
-search:                      # activer la barre de recherche
-  fuels:                     # liste des carburants à inclure dans la recherche
-    - E10
-    - SP95
-    - SP98
-    - Gazole
-    - E85
-    - GPLc
-  default_radius: 5          # radius de recherche par défaut
+# ---- Recherche à proximité (absente = désactivée ; `true` = réglages par défaut)
+search:                            # carburants : à cocher sur la carte, choix enregistré
+  default_radius: 5                 # km, de 1 à 30
+  # entity: person.moi              # centre de la recherche (voir « Recherche à proximité »)
 
 # ---- Interaction et fond ---------------------------------------------------
 more_info: true               # clic sur une ligne = fiche de la 1re entité de la station
@@ -155,9 +150,9 @@ logos:
 | `highlight` | bool | `true` | Coloration mini / maxi. |
 | `color_min` | string | `#4caa40` | Couleur du prix le plus bas. |
 | `color_max` | string | `#e05252` | Couleur du prix le plus haut. |
-| `search` | object | `-` | Active la recherche de stations à proximité. Si absent, la carte fonctionne en mode catalogue classique. |
-| `search.fuels` | liste | `[E10, SP95, SP98, Gazole]` | Carburants inclus dans la recherche. Valeurs possibles : E10, SP95, SP98, Gazole, E85, GPLc. |
-| `search.default_radius` | number | `5` | Rayon de recherche initial en kilomètres. Le rayon peut ensuite être ajusté avec les boutons + et - de la carte. |
+| `search` | object / bool | absent | Barre de recherche à proximité (voir *Recherche à proximité*). `true` : réglages par défaut. |
+| `search.default_radius` | number | `5` | Rayon initial en km, de 1 à 30 ; réglable ensuite avec − / + sur la carte. |
+| `search.entity` | string | auto | Centre de la recherche. Absent : la personne de l'utilisateur connecté, sinon `zone.home`. |
 | `more_info` | bool | `true` | Clic sur une ligne → fiche de l'entité. |
 | `map_link` | string | `none` | Lien vers la station sur une carte : `auto`, `google`, `apple`, `waze` (voir *Lien carte*). |
 | `logos` | map | `{}` | `enseigne: fichier` ou `station_id: fichier`. |
@@ -293,6 +288,104 @@ une recherche `adresse + code postal + ville`. Sans l'un ni l'autre, le nom rest
 Le clic sur le lien n'ouvre **pas** la fiche de l'entité (`more_info`), et le lien ne
 transmet pas l'adresse du tableau de bord au service de cartes (`rel="noreferrer"`).
 
+## Recherche à proximité
+
+Avec `search`, une barre s'affiche au-dessus du tableau pour chercher les stations les
+moins chères autour de soi. Désactivée par défaut ; `search: true` l'active avec les
+réglages par défaut.
+
+La carte appelle le service `prix_carburant.find_nearest_stations` de l'intégration, une
+fois par carburant coché : le service ne cherche qu'un carburant à la fois. Chaque appel
+interroge l'API publique des prix, qui renvoie **au plus les 10 stations les moins chères**
+du rayon pour ce carburant ; les réponses sont fusionnées en une ligne par station.
+
+### La barre et ses boutons
+
+| Élément | Rôle | États |
+|---|---|---|
+| Titre et sous-titre | « Autour de Léo · 5 km » : centre et rayon de la prochaine recherche. | « Aucune position connue » quand aucun centre n'est localisé (voir plus bas). |
+| **−** / **+** | Rayon, de 1 km en 1 km, entre 1 et 30 km. | Grisé à la borne. |
+| **🔍** | Lance la recherche. | Gris : prêt. **Bleu** : carburants ou rayon changés depuis la dernière recherche, ou carburant en erreur ; relancer les applique. **⌛** : recherche en cours, bouton inactif (pas de double lancement). Grisé : aucune position connue. |
+| **✕** | Efface les résultats et rend le tableau des stations suivies. | Présent dès qu'une recherche a abouti ou échoué. Une réponse encore en route est ignorée. |
+| Pastilles | Carburants de la prochaine recherche (voir *Choix des carburants*). | Bleu : coché. La dernière cochée est verrouillée. |
+
+**Seul 🔍 interroge l'API.** Les pastilles, − et + ne font que préparer la prochaine
+recherche : rien n'est lancé au chargement, ni quand la position change.
+
+Sous la barre, une ligne d'état donne le résultat : « 3 stations dans un rayon de 5 km ·
+14:32 », complétée de « sans E85 (erreur) » si un carburant a échoué, ou « Recherche
+impossible : … » si tous ont échoué.
+
+### Choix des carburants
+
+Les pastilles proposent les carburants que remontent les sensors de l'intégration, parmi
+ceux que le service sait chercher (`E10`, `SP95`, `SP98`, `Gazole`, `E85`, `GPLc`). Sans
+aucun sensor, les six sont proposés ; s'il n'y en a qu'un, il n'y a rien à choisir et la
+rangée disparaît. **Tous sont cochés au départ.**
+
+Sur des résultats déjà affichés :
+
+- **décocher** un carburant retire aussitôt sa colonne, ainsi que les stations qui
+  n'avaient de prix que pour lui, sans nouvel appel ;
+- **cocher** un carburant absent des résultats allume 🔍 : il faut relancer pour l'obtenir.
+
+### Ce qui est enregistré
+
+| Réglage | Où | Durée | Portée |
+|---|---|---|---|
+| Carburants cochés | Données utilisateur de Home Assistant (`frontend/set_user_data`, clef `prix-carburant-card`) | Permanent | Le compte Home Assistant connecté : tous ses appareils, toutes ses cartes |
+| Rayon réglé avec − / + | Mémoire de la page | Jusqu'au rechargement, changement de vue compris | Les cartes de même réglage (`default_radius` et `search.entity`) |
+| Résultats | Mémoire de la page | Jusqu'au rechargement, changement de vue compris | Les cartes de même réglage |
+| Rayon par défaut, position de référence | Configuration de la carte (YAML ou éditeur) | Permanent | Cette carte, pour tous les utilisateurs |
+
+Le choix des carburants est **lié au compte utilisateur Home Assistant**, celui avec lequel
+on est connecté. C'est Home Assistant qui rattache ces données au compte de la connexion
+authentifiée : la carte ne choisit pas le compte, et ne peut ni lire ni modifier le choix
+d'un autre utilisateur. Il s'agit bien du compte, pas de l'entité `person`. Les données
+sont stockées sur le serveur, dans `.storage/frontend.user_data_<id du compte>`, et font
+donc partie des sauvegardes. Le choix suit ainsi l'utilisateur sur son téléphone comme sur
+son ordinateur, et survit au rechargement de la page. Ce sont les carburants **décochés** qui sont retenus : un carburant qui apparaît plus
+tard dans l'intégration est donc coché d'office. Un carburant décoché sur une carte qui le
+propose reste décoché sur une autre qui ne le propose pas encore.
+
+- **Lecture** : une seule par chargement de page. Un clic fait avant la réponse l'emporte
+  sur elle.
+- **Écriture** : une demi-seconde après le dernier clic, pour que plusieurs clics rapides
+  ne fassent qu'un enregistrement. Les autres données éventuelles de la clef sont
+  conservées.
+- **Sans accès** à ces données (refus de Home Assistant), le choix vaut jusqu'au
+  rechargement de la page.
+- **Compte partagé** : sur une tablette murale connectée sous un compte commun, tous ceux
+  qui l'utilisent partagent la même sélection.
+- **Revenir au réglage de départ** : recocher toutes les pastilles.
+
+### Pendant l'affichage des résultats
+
+- le tableau montre les stations trouvées à la place des stations suivies ; ✕ y revient ;
+- les colonnes sans donnée pour ces stations (logo, enseigne, date, identifiant) sont
+  masquées, comme les carburants non cochés ; les carburants cochés absents de
+  `columns` sont ajoutés après le dernier carburant affiché ;
+- un tri configuré sans objet ici (ordre personnalisé, date, carburant non coché) cède
+  la place à la distance ; le clic sur les en-têtes fonctionne normalement ;
+- la distance suit la position actuelle du centre, mais **les prix ne sont pas
+  rafraîchis** : l'heure de la recherche est affichée, il suffit de relancer ;
+- `map_link` fonctionne (le service renvoie les coordonnées GPS), `more_info` non : ces
+  stations n'ont pas d'entité dans Home Assistant.
+
+### Centre de la recherche
+
+Dans l'ordre : `search.entity` s'il est renseigné (personne, `device_tracker` ou zone) ;
+sinon la personne liée à l'utilisateur connecté, si elle est localisée ; sinon le domicile
+(`zone.home`). Une tablette murale connectée sous un compte sans personne cherche donc
+autour de la maison. Le nom du centre est affiché sous le titre, et la carte bascule
+d'elle-même quand la personne retrouve une position.
+
+### En cas d'erreur
+
+Si un carburant échoue, les autres s'affichent (« sans E85 (erreur) ») et 🔍 s'allume
+pour le redemander. Si tous échouent, le message d'erreur de Home Assistant s'affiche et
+le tableau garde les stations suivies. Voir aussi *Dépannage*.
+
 ## Noms et villes
 
 ```yaml
@@ -324,7 +417,7 @@ avec un préfixe global défini.
 
 ## Éditeur graphique
 
-Six sections repliables, dans l'ordre des décisions :
+Sept sections repliables, dans l'ordre des décisions :
 
 | Section | Contenu |
 |---|---|
@@ -334,6 +427,7 @@ Six sections repliables, dans l'ordre des décisions :
 | **Affichage** | `title`, `show_title`, `unit`, `decimals` (0 à 3 dans l'éditeur, jusqu'à 10 en YAML), `highlight`, `more_info`, `map_link`. |
 | **Noms et villes** | Un champ nom et un champ ville par station affichée, plus les surcharges devenues orphelines. |
 | **Logos des enseignes** | Préfixe, puis un champ et un aperçu par enseigne détectée. |
+| **Recherche à proximité** | Interrupteur de la barre, rayon par défaut, position de référence (`search.entity`). Les carburants se cochent sur la carte. |
 
 `background`, `color_min` et `color_max` ne sont pas exposés par l'éditeur : ils se règlent
 en YAML et l'éditeur les conserve intacts.
@@ -346,6 +440,8 @@ tête, un séparateur *Masquées* marque la frontière.
 Deux verrous, avec leur explication en infobulle : la dernière colonne et la dernière
 station cochées ne peuvent pas être décochées — une liste vide signifiant « toutes » ou
 « celles par défaut », l'éditeur ferait exactement l'inverse de ce qui est demandé.
+Même règle pour les pastilles de carburant de la recherche à proximité, sur la carte : la
+dernière cochée ne se décoche pas, une recherche sans carburant ne chercherait rien.
 
 **Liste figée à la première modification.** Tant que la section *Stations* n'est pas
 touchée, `stations` reste absent de la configuration et la carte suit toutes les stations
@@ -403,7 +499,8 @@ de langue.
 | `--prix-carburant-color-min` | `color_min` | Couleur du prix le plus bas. |
 | `--prix-carburant-color-max` | `color_max` | Couleur du prix le plus haut. |
 
-Sous 600 px de large, la carte réduit d'elle-même le texte, les marges et les logos.
+Sous 600 px de large, la carte réduit d'elle-même le texte, les marges, les logos et les
+boutons de recherche.
 En vue *sections*, elle demande la pleine largeur (minimum 6 colonnes sur 12).
 
 La carte suit le thème de Home Assistant :
@@ -430,6 +527,13 @@ sensor dans *Outils de développement → États*.
 **Une colonne entière affiche `-`** — l'identifiant n'est pas un `fuel_type` remonté par
 l'intégration (attention à la casse : `GPLc`, pas `gplc`), ou aucune des stations affichées
 ne vend ce carburant.
+
+**« Recherche impossible : … »** : le message vient de Home Assistant. Causes
+possibles : version de l'intégration Prix Carburant sans le service
+`find_nearest_stations`, API des prix indisponible, ou entité de `search.entity` inconnue.
+
+**« Aucune position connue »** : ni `search.entity`, ni personne localisée pour
+l'utilisateur connecté, ni `zone.home` avec des coordonnées.
 
 **Un logo ne s'affiche pas** — dans l'éditeur, le cadre d'aperçu passe en rouge et
 l'infobulle donne l'URL réellement demandée : c'est en général `logo_path` qui manque ou
